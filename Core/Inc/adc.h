@@ -38,6 +38,12 @@ extern ADC_HandleTypeDef hadc2;
 
 /* USER CODE BEGIN Private defines */
 #define ADC_RX_BUFFER 256
+#define IA0_CHANNEL 0
+#define IA1_CHANNEL 1
+#define IB0_CHANNEL 2
+#define IB1_CHANNEL 3
+#define IC0_CHANNEL 4
+#define IC1_CHANNEL 5
 /* USER CODE END Private defines */
 
 void MX_ADC1_Init(void);

@@ -92,8 +92,9 @@ void Error_Handler(void);
 #define M2_ENC_A_GPIO_Port GPIOB
 #define M2_ENC_B_Pin GPIO_PIN_5
 #define M2_ENC_B_GPIO_Port GPIOB
-#define M2_ENC_C_Pin GPIO_PIN_6
-#define M2_ENC_C_GPIO_Port GPIOB
+#define M2_ENC_Z_Pin GPIO_PIN_6
+#define M2_ENC_Z_GPIO_Port GPIOB
+#define M2_ENC_Z_EXTI_IRQn EXTI9_5_IRQn
 #define KEY3_Pin GPIO_PIN_0
 #define KEY3_GPIO_Port GPIOE
 #define KEY4_Pin GPIO_PIN_1

@@ -379,7 +379,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
-void get_m0_voltage(){
+float ADC2Culrent() {
 
 }
 
