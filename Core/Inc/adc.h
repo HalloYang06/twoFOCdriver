@@ -37,13 +37,13 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 
 /* USER CODE BEGIN Private defines */
-#define ADC_RX_BUFFER 256
-#define IA0_CHANNEL 0
-#define IA1_CHANNEL 1
-#define IB0_CHANNEL 2
-#define IB1_CHANNEL 3
-#define IC0_CHANNEL 4
-#define IC1_CHANNEL 5
+
+// ADC通道定义
+#define ADC_RX_BUFFER 3
+
+//DMA缓冲区
+extern uint16_t voltage_buffer[ADC_RX_BUFFER];
+
 /* USER CODE END Private defines */
 
 void MX_ADC1_Init(void);

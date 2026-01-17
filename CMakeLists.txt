@@ -37,16 +37,36 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
         Core/Src/encoder.c
-        Core/Src/encoder.h)
+        Core/Inc/encoder.h
+        Core/Src/current_sense.c
+        Core/Inc/current_sense.h
+        Core/Src/FOC.c
+        Core/Inc/FOC.h
+        Core/Src/pwm_driver.c
+        Core/Inc/pwm_driver.h
+)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
+
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
-
+#add libraries
+add_subdirectory(Drivers/CMSIS-DSP)
+# Link libraries to executable
+target_link_libraries(${CMAKE_PROJECT_NAME} 
+    
+    CMSISDSP
+)
+#add include paths
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    # Add user defined include paths
+        ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
+        ${CMAKE_SOURCE_DIR}/Drivers/CMSIS-DSP/Include
+)
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here

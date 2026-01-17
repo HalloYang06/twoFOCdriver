@@ -22,6 +22,9 @@
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "encoder.h"
+#include "FOC.h"
+#include "current_sense.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +34,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+extern Encoder_TypeDef encoder_M2;      // 在main.c中定义
+extern Encoder_TypeDef encoder_M0;      // FOC控制的编码器
+extern FOC_TypeDef foc;                 // FOC控制器
+extern CurrentSense_TypeDef current_sense; // 电流采样
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -41,7 +47,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+ 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,6 +64,7 @@
 extern DMA_HandleTypeDef hdma_adc1;
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
+extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim6;
 
@@ -221,6 +228,20 @@ void EXTI9_5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM3 global interrupt.
+  */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+
+  /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM6 global interrupt, DAC1_CH1 and DAC1_CH2 underrun error interrupts.
   */
 void TIM6_DAC_IRQHandler(void)
@@ -249,5 +270,72 @@ void TIM7_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+
+/* ==================== FOC电流环相关回调 (20kHz) ==================== */
+
+/**
+ * @brief  ADC转换完成回调 - FOC电流环主循环
+ * @note   由TIM1 CH4触发，频率20kHz (50us周期)
+ * @param  hadc: ADC句柄
+ * @retval None
+ */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    if (hadc == &hadc1)
+    {
+        /* 更新电流采样数据 */
+        CurrentSense_DMA_CpltCallback(&current_sense);
+
+        /* 仅在FOC使能时执行控制算法 */
+        if (foc.enabled)
+        {
+            /* 1. 获取三相电流 */
+            PhaseCurrents_TypeDef i_abc;
+            CurrentSense_GetCurrents(&current_sense, &i_abc.Ia, &i_abc.Ib, &i_abc.Ic);
+
+            /* 2. 更新FOC电流（Clarke + Park变换） */
+            FOC_UpdateCurrents(&foc, &i_abc);
+
+            /* 3. 电流环PID计算 */
+            FOC_ComputeCurrentLoop(&foc);
+
+            /* 4. 更新PWM输出（逆Park + SVPWM） */
+            FOC_UpdatePWM(&foc);
+        }
+    }
+}
+
+/**
+ * @brief  ADC DMA半完成回调 - FOC不使用此回调
+ * @note   如果使用双缓冲模式，可以在这里处理前半部分数据
+ * @param  hadc: ADC句柄
+ * @retval None
+ */
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    if (hadc == &hadc1)
+    {
+        /* FOC电流环不使用半完成回调 */
+        /* 如果需要双缓冲，可以在这里处理 */
+        CurrentSense_DMA_HalfCpltCallback(&current_sense);
+    }
+}
+
+/* ==================== 编码器相关回调 ==================== */
+/**
+  * @brief  GPIO外部中断回调函数
+  * @param  GPIO_Pin: 触发中断的GPIO引脚
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    // M2编码器Z相中断
+
+    if (GPIO_Pin == M2_ENC_Z_Pin)
+    {
+        Encoder_ZPulse_Callback(&encoder_M2);
+    }
+
+}
 
 /* USER CODE END 1 */

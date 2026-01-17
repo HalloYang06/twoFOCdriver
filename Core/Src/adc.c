@@ -21,8 +21,13 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
+#include "current_sense.h"
 
 uint16_t voltage_buffer[ADC_RX_BUFFER];
+
+// 电流采样对象（如果有多个电机，可以定义多个）
+extern CurrentSense_TypeDef current_sense_M1;  // 需在main.c中定义
+
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;
@@ -58,7 +63,7 @@ void MX_ADC1_Init(void)
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T1_TRGO;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
+  hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc1.Init.OversamplingMode = DISABLE;
@@ -379,9 +384,6 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
-float ADC2Culrent() {
-
-}
 
 
 /* USER CODE END 1 */

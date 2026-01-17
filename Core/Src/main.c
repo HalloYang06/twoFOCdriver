@@ -28,12 +28,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "encoder.h"
+#include "current_sense.h"
+#include "pwm_driver.h"
+#include "FOC.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+Encoder_TypeDef encoder_M0, encoder_M1, encoder_M2;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -107,7 +110,17 @@ int main(void)
   MX_TIM15_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  /* 初始化PWM驱动，启动6路互补PWM输出 */
+  PWM_Init();
 
+  /* 设置初始占空比为0（电机静止） */
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0); // U相
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0); // V相
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0); // W相
+
+  HAL_TIM_OC_Start(&htim1, TIM_CHANNEL_4); // 启动定时器1通道4，用于电流采样触发ADC1
+
+  HAL_TIM_Base_Start_IT(&htim7); // 启动定时器7中断，用于编码器速度更新，和速度环控制
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -242,7 +255,39 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
+  /* ==================== FOC速度环相关回调 (1kHz) ==================== */
 
+/**
+ * @brief  TIM定时器周期回调 - FOC速度环主循环
+ * @note   TIM7每1ms触发一次
+ * @param  htim: 定时器句柄
+ * @retval None
+ */
+
+
+ /* TIM7: 速度环控制 (1kHz) */
+    if (htim == &htim7)
+    {
+        /* 更新编码器速度 */
+        Encoder_UpdateSpeed(&encoder_M0);
+
+        /* 仅在FOC使能时执行速度环 */
+        if (foc.enabled)
+        {
+            /* 1. 计算机械角度 (rad) */
+            float mechanical_angle = (float)Encoder_GetTotalCount(&encoder_M0)
+                                   / (4.0f * ENCODER_PPR) * 2.0f * PI;
+
+            /* 2. 更新FOC角度（机械角 → 电角） */
+            FOC_UpdateAngle(&foc, mechanical_angle);
+
+            /* 3. 计算电角速度 (rad/s) */
+            foc.omega_elec = Encoder_GetSpeed_RPS(&encoder_M0) * 2.0f * PI * foc.pole_pairs;
+
+            /* 4. 速度环PID计算（输出q轴电流目标值） */
+            FOC_ComputeVelocityLoop(&foc);
+        }
+    }
   /* USER CODE END Callback 1 */
 }
 
