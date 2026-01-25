@@ -81,7 +81,7 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
-            <RunUserProg2>0</RunUserProg2>
+            <RunUserProg2>1</RunUserProg2>
             <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_PWR_LDO_SUPPLY,USE_HAL_DRIVER,STM32H750xx,ARM_MATH_DSP,ARM_MATH_MATRIX_CHECK,ARM_MATH_ROUNDING</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;..\Drivers\CMSIS-DSP\Include</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Drivers/CMSIS-DSP/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -395,6 +395,36 @@
           <GroupName>Application/User/Core</GroupName>
           <Files>
             <File>
+              <FileName>encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>FOC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\FOC.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_hardware.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\motor_hardware.c</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\pwm_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>current_sense.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\current_sense.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
@@ -448,36 +478,6 @@
               <FileName>stm32h7xx_hal_timebase_tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32h7xx_hal_timebase_tim.c</FilePath>
-            </File>
-            <File>
-              <FileName>encoder.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\encoder.c</FilePath>
-            </File>
-            <File>
-              <FileName>FOC.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\FOC.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\motor.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_hardware.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\motor_hardware.c</FilePath>
-            </File>
-            <File>
-              <FileName>pwm_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\pwm_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>current_sense.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\current_sense.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -600,14 +600,14 @@
           <GroupName>Drivers/CMSIS</GroupName>
           <Files>
             <File>
-              <FileName>system_stm32h7xx.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Core/Src/system_stm32h7xx.c</FilePath>
-            </File>
-            <File>
               <FileName>arm_cortexM7lfdp_math.lib</FileName>
               <FileType>4</FileType>
               <FilePath>D:\KeilMDK\ARM\PACK\ARM\CMSIS\5.7.0\CMSIS\DSP\Lib\ARM\arm_cortexM7lfdp_math.lib</FilePath>
+            </File>
+            <File>
+              <FileName>system_stm32h7xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/system_stm32h7xx.c</FilePath>
             </File>
           </Files>
         </Group>

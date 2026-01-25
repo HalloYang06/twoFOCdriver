@@ -22,7 +22,6 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "FOC.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -122,7 +121,6 @@ void StartDefaultTask(void *argument)
   }
   /* USER CODE END StartDefaultTask */
 }
-
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */

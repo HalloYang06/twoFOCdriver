@@ -21,10 +21,13 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-
+uint8_t rx_buf[RX_BUF_SIZE];
+uint8_t process_buf[RX_BUF_SIZE];
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart4;
+DMA_HandleTypeDef hdma_uart4_rx;
+DMA_HandleTypeDef hdma_uart4_tx;
 
 /* UART4 init function */
 void MX_UART4_Init(void)
@@ -105,6 +108,46 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     GPIO_InitStruct.Alternate = GPIO_AF6_UART4;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    /* UART4 DMA Init */
+    /* UART4_RX Init */
+    hdma_uart4_rx.Instance = DMA1_Stream0;
+    hdma_uart4_rx.Init.Request = DMA_REQUEST_UART4_RX;
+    hdma_uart4_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_uart4_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_uart4_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_uart4_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_uart4_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_uart4_rx.Init.Mode = DMA_CIRCULAR;
+    hdma_uart4_rx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_uart4_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_uart4_rx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart4_rx);
+
+    /* UART4_TX Init */
+    hdma_uart4_tx.Instance = DMA1_Stream2;
+    hdma_uart4_tx.Init.Request = DMA_REQUEST_UART4_TX;
+    hdma_uart4_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_uart4_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_uart4_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_uart4_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_uart4_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_uart4_tx.Init.Mode = DMA_NORMAL;
+    hdma_uart4_tx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_uart4_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_uart4_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(uartHandle,hdmatx,hdma_uart4_tx);
+
+    /* UART4 interrupt Init */
+    HAL_NVIC_SetPriority(UART4_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(UART4_IRQn);
   /* USER CODE BEGIN UART4_MspInit 1 */
 
   /* USER CODE END UART4_MspInit 1 */
@@ -128,6 +171,12 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
 
+    /* UART4 DMA DeInit */
+    HAL_DMA_DeInit(uartHandle->hdmarx);
+    HAL_DMA_DeInit(uartHandle->hdmatx);
+
+    /* UART4 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(UART4_IRQn);
   /* USER CODE BEGIN UART4_MspDeInit 1 */
 
   /* USER CODE END UART4_MspDeInit 1 */
@@ -135,5 +184,27 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+void UART_Data_process(uint8_t *buf,uint8_t len) {
+  if (len<sizeof(Data_frame_t)) return;
+  for (int i=0; i<len; i++) {
+    if (buf[i]==0xAA && buf[i+1]==0x55) {
+      Data_frame_t *package=(Data_frame_t*)buf[i];
+      uint8_t sum=0;
+      uint8_t *check_pointer=(uint8_t*)&package->len;
+      for (uint8_t j=0; j<6; j++) {
+        sum += check_pointer[j];
+      }
+      if (package->crc == sum && package->tail==0x0A) {
+        if (package->cmd ==0x01) {
+          open_loop_velocity=package->data;
+        }
+
+      }
+
+    }
+
+  }
+
+}
 
 /* USER CODE END 1 */

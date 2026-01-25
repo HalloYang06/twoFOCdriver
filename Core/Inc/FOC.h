@@ -118,7 +118,8 @@ void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta, AlphaBeta_TypeDef *v_
 /* ==================== SVPWM调制函数 ==================== */
 void SVPWM_Calculate(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *svpwm);
 void SVPWM_GetDutyCycles(SVPWM_TypeDef *svpwm, float *duty_a, float *duty_b, float *duty_c);
-
+/* ==================== SPWM调制函数 ==================== */
+void SPWM_Calculate(FOC_TypeDef *foc,AlphaBeta_TypeDef *v_alphabeta, float vdc);
 /* ==================== FOC主控制函数 ==================== */
 void FOC_Init(FOC_TypeDef *foc_ctrl, uint8_t pole_pairs, float voltage_supply);
 void FOC_SetVelocity(FOC_TypeDef *foc_ctrl, float target_velocity);

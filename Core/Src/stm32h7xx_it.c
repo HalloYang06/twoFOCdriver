@@ -25,6 +25,8 @@
 #include "encoder.h"
 #include "FOC.h"
 #include "current_sense.h"
+#include "usart.h"
+#include "stdlib.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,6 +68,9 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim7;
+extern DMA_HandleTypeDef hdma_uart4_rx;
+extern DMA_HandleTypeDef hdma_uart4_tx;
+extern UART_HandleTypeDef huart4;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
@@ -189,6 +194,20 @@ void EXTI4_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 stream0 global interrupt.
+  */
+void DMA1_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream0_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart4_rx);
+  /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream0_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream1 global interrupt.
   */
 void DMA1_Stream1_IRQHandler(void)
@@ -200,6 +219,20 @@ void DMA1_Stream1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
 
   /* USER CODE END DMA1_Stream1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream2 global interrupt.
+  */
+void DMA1_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart4_tx);
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 1 */
 }
 
 /**
@@ -243,6 +276,37 @@ void TIM3_IRQHandler(void)
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
   /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles UART4 global interrupt.
+  */
+void UART4_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART4_IRQn 0 */
+  if (__HAL_UART_GET_FLAG(&huart4,UART_FLAG_IDLE) != RESET) {
+    __HAL_UART_CLEAR_IDLEFLAG(&huart4);//清除中断空闲标志位
+    //停止DMA,防止覆盖
+    HAL_UART_DMAStop(&huart4);
+    //计算接收的数据长度
+    uint8_t len=RX_BUF_SIZE-__HAL_DMA_GET_COUNTER(huart4.hdmarx);
+    //开始处理数据
+    rx_buf[len]="\0";
+    float speed_cmd=(float)atof((char*)rx_buf);
+    if (speed_cmd <= 100.0f && speed_cmd >=-100.f) {
+      open_loop_velocity =speed_cmd;
+    }
+
+    //重新开启DMA接收
+    HAL_UART_Receive_DMA(&huart4, rx_buf, RX_BUF_SIZE);
+
+  }
+
+  /* USER CODE END UART4_IRQn 0 */
+  HAL_UART_IRQHandler(&huart4);
+  /* USER CODE BEGIN UART4_IRQn 1 */
+
+  /* USER CODE END UART4_IRQn 1 */
 }
 
 /**

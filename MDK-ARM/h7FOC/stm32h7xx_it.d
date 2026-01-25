@@ -46,3 +46,5 @@ h7foc\stm32h7xx_it.o: ../Core/Inc/FOC.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/current_sense.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/adc.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/pwm_driver.h
+h7foc\stm32h7xx_it.o: ../Core/Inc/usart.h
+h7foc\stm32h7xx_it.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdlib.h

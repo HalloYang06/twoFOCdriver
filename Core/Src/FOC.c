@@ -213,7 +213,24 @@ void SVPWM_Calculate(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *
     // 计算零矢量时间
     svpwm->T0 = T_pwm - svpwm->T1 - svpwm->T2;
 }
-
+/**
+ *@brief SPWM计算
+ * @param  foc: FOC结构体
+ * @param  v_alphabeta :alphabeta结构体
+ * @param  vdc:母线电压
+ * @retval none
+ */
+void SPWM_Calculate(FOC_TypeDef *foc,AlphaBeta_TypeDef *v_alphabeta, float vdc) {
+    float v_a=v_alphabeta->alpha;
+    float v_b=-0.5f*v_alphabeta->alpha+0.8660254*v_alphabeta->beta;
+    float v_c=-0.8660254*v_alphabeta->alpha-0.5f*v_alphabeta->beta;
+    foc->duty_c = v_c / vdc+0.5;
+    foc->duty_a = v_a / vdc+0.5;
+    foc->duty_b = v_b / vdc+0.5;
+    if (foc->duty_a>1.0f) foc->duty_a=1.0f;if (foc->duty_a<0.0f) foc->duty_a=0.0f;
+    if (foc->duty_b>1.0f) foc->duty_b=1.0f;if (foc->duty_b<0.0f) foc->duty_b=0.0f;
+    if (foc->duty_c>1.0f) foc->duty_c=1.0f;if (foc->duty_c<0.0f) foc->duty_c=0.0f;
+}
 /**
  * @brief  根据SVPWM计算三相占空比
  * @param  svpwm: SVPWM结构体

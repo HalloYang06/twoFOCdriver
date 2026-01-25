@@ -75,8 +75,8 @@ CurrentSense_TypeDef current_sense;
 
 /* ==================== 开环速度测试相关变量 ==================== */
 float open_loop_angle = 0.0f;
-float open_loop_velocity = 5.0f;    // 降低速度：10 → 5 rad/s
-float open_loop_voltage = 2.0f;     // 降低电压：5V → 2V，避免启动时过冲
+float open_loop_velocity = 50.0f;    // 降低速度：便于启动
+float open_loop_voltage = 10.0f;     // 提高电压：2V → 6V（24V母线的25%）
 uint8_t open_loop_enabled = 1;
 /* USER CODE END 0 */
 
@@ -146,32 +146,31 @@ int main(void)
   /* 初始化FOC控制器 - 用于开环测试 */
   FOC_Init(&foc, 11, 24.0f);  // 7极对数，24V供电（根据你的电机参数修改）
 
+  /* ===== IR2101S 自举电容充电 ===== */
+  /* IR2101S 高侧驱动需要自举电容，必须先让低侧导通给电容充电 */
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0);  // 低侧导通
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);
+  HAL_Delay(100);  // 等待100ms让自举电容充电
+
   HAL_TIM_Base_Start_IT(&htim7); // 启动定时器7中断，用于编码器速度更新和开环角度更新
 
   /* 串口输出提示信息 */
-  char welcome_msg[] = "\r\n===== 开环速度测试模式 =====\r\n";
+  char welcome_msg[] = "openloop test";
+	HAL_UART_Transmit(&huart4,(uint8_t*)welcome_msg,10,100);
 
 
-  /* 调试：闪烁LED确认程序运行 */
-
-
-  /* ===== 低侧MOSFET测试（不需要自举电容）===== */
-  /* 取消下面的注释来测试低侧PWM是否工作 */
-   //PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 1500);  // U相 50% 占空比
-   //PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);     // V相 0%（低侧常关）
-   //PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);     // W相 0%（低侧常关）
-  /* 这样只有 U相低侧MOSFET导通，如果电机抖动说明低侧工作正常 */
   uint32_t  last_time=0;
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  //osKernelInitialize();
+  osKernelInitialize();
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
-  //MX_FREERTOS_Init();
+  MX_FREERTOS_Init();
 
   /* Start scheduler */
-  //osKernelStart();
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -179,16 +178,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+		
     /* USER CODE END WHILE */
-    uint32_t current_tick=HAL_GetTick();
-    if (current_tick-last_time>=500) {
-      HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
-      HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
-      HAL_UART_Transmit(&huart4, (uint8_t*)welcome_msg, strlen(welcome_msg), 100);
-      last_time=current_tick;
-    }
-
 
     /* USER CODE BEGIN 3 */
   }
@@ -287,10 +278,10 @@ void OpenLoop_SpeedTest(void)
     foc.v_alphabeta.beta  = foc.v_dq.d * sin_theta + foc.v_dq.q * cos_theta;
 
     /* 5. SVPWM调制 */
-    SVPWM_TypeDef svpwm;
-    SVPWM_Calculate(&foc.v_alphabeta, 24.0f, &svpwm);  // 24V供电
-    SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
-
+    //SVPWM_TypeDef svpwm;
+    //SVPWM_Calculate(&foc.v_alphabeta, 24.0f, &svpwm);  // 24V供电
+    //SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
+    SPWM_Calculate(&foc,&foc.v_alphabeta,24.0f);
     /* 6. 更新PWM占空比 */
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
@@ -323,9 +314,9 @@ void OpenLoop_PrintSpeed(void)
         float speed_rps = Encoder_GetSpeed_RPS(&encoder_M0);
         float elec_angle_deg = open_loop_angle * 180.0f / PI;
 
-        char msg[128];
-        sprintf(msg, "[OpenLoop] Target: %.2f rad/s | Speed: %.2f RPM (%.3f RPS) | Angle: %.1f deg\r\n",
-                open_loop_velocity, speed_rpm, speed_rps, elec_angle_deg);
+        char msg[200];
+        sprintf(msg, "[OpenLoop] Angle:%.1f deg | Duty: A=%.2f B=%.2f C=%.2f | Vq=%.2f V\r\n",
+                elec_angle_deg, foc.duty_a, foc.duty_b, foc.duty_c, open_loop_voltage);
         HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
     }
 }

@@ -35,7 +35,20 @@ extern "C" {
 extern UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN Private defines */
-
+#define RX_BUF_SIZE 128
+extern  uint8_t rx_buf[RX_BUF_SIZE];
+extern  uint8_t process_buf[RX_BUF_SIZE];
+extern  float open_loop_velocity;
+  typedef  struct {
+    uint8_t header1 ;
+    uint8_t header2;
+    uint8_t len;
+    uint8_t cmd;
+    float data;
+    uint8_t crc;
+    uint8_t tail;
+  }Data_frame_t;
+  void UART_Data_process(uint8_t *buf,uint8_t len);
 /* USER CODE END Private defines */
 
 void MX_UART4_Init(void);
