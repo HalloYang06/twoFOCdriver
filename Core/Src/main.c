@@ -75,8 +75,8 @@ CurrentSense_TypeDef current_sense;
 
 /* ==================== 开环速度测试相关变量 ==================== */
 float open_loop_angle = 0.0f;
-float open_loop_velocity = 10.0f;    // 降低速度：便于启动
-float open_loop_voltage = 3.0f;     // 提高电压：2V → 6V（24V母线的25%）
+float open_loop_velocity = 500.0f;    // 降低速度：便于启动
+float open_loop_voltage = 5.0f;     // 提高电压：2V → 6V（24V母线的25%）
 uint8_t open_loop_enabled = 1;
 /* USER CODE END 0 */
 
@@ -259,7 +259,7 @@ void OpenLoop_SpeedTest(void)
     }
 
     /* 1. 更新开环电角度（积分） */
-    open_loop_angle += open_loop_velocity * 0.001f;  // dt = 0.1ms
+    open_loop_angle += open_loop_velocity * 0.0001f;  // dt = 1ms
 
     /* 2. 归一化角度到 [0, 2π] */
     if (open_loop_angle > TWO_PI) {
@@ -389,7 +389,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (open_loop_enabled)
         {
             OpenLoop_SpeedTest();    // 执行开环SVPWM输出
-            OpenLoop_PrintSpeed();   // 打印速度信息
+            //OpenLoop_PrintSpeed();   // 打印速度信息
         }
         /* 闭环FOC控制模式 */
         else if (foc.enabled)
