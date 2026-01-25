@@ -249,7 +249,33 @@ void SVPWM_GetDutyCycles(SVPWM_TypeDef *svpwm, float *duty_a, float *duty_b, flo
             break;
     }
 }
+void SVPWM_Calculate_Simplified(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *svpwm)
+{
+    // 1. 基础三相电压合成 (Inverse Clarke)
+    float va = v_alphabeta->alpha;
+    float vb = -0.5f * v_alphabeta->alpha + SQRT3_BY_2 * v_alphabeta->beta;
+    float vc = -0.5f * v_alphabeta->alpha - SQRT3_BY_2 * v_alphabeta->beta;
 
+    // 2. 找到最大、最小分量
+    float v_max = va; if (vb > v_max) v_max = vb; if (vc > v_max) v_max = vc;
+    float v_min = va; if (vb < v_min) v_min = vb; if (vc < v_min) v_min = vc;
+
+    // 3. 核心：计算零序偏移电压 (产生马鞍波的关键)
+    float v_offset = (v_max + v_min) * 0.5f;
+
+    // 4. 最终归一化占空比 (0.0 ~ 1.0)
+    // 我们把结果直接存在这三个变量里，省去扇区逻辑
+    svpwm->T1 = (va - v_offset) / v_dc + 0.5f; // A相比例
+    svpwm->T2 = (vb - v_offset) / v_dc + 0.5f; // B相比例
+    svpwm->T0 = (vc - v_offset) / v_dc + 0.5f; // C相比例
+}
+void SVPWM_GetDutyCycles2(SVPWM_TypeDef *svpwm, float *duty_a, float *duty_b, float *duty_c)
+{
+    // 限制在有效范围内，防止过调制
+    *duty_a = _constrainFloat(svpwm->T1, 0.0f, 1.0f);
+    *duty_b = _constrainFloat(svpwm->T2, 0.0f, 1.0f);
+    *duty_c = _constrainFloat(svpwm->T0, 0.0f, 1.0f);
+}
 /* ==================== FOC主控制函数实现 ==================== */
 
 /**

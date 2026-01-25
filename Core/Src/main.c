@@ -75,8 +75,8 @@ CurrentSense_TypeDef current_sense;
 
 /* ==================== 开环速度测试相关变量 ==================== */
 float open_loop_angle = 0.0f;
-float open_loop_velocity = 60.0f;    // 降低速度：便于启动
-float open_loop_voltage = 10.0f;     // 提高电压：2V → 6V（24V母线的25%）
+float open_loop_velocity = 10.0f;    // 降低速度：便于启动
+float open_loop_voltage = 3.0f;     // 提高电压：2V → 6V（24V母线的25%）
 uint8_t open_loop_enabled = 1;
 /* USER CODE END 0 */
 
@@ -259,7 +259,7 @@ void OpenLoop_SpeedTest(void)
     }
 
     /* 1. 更新开环电角度（积分） */
-    open_loop_angle += open_loop_velocity * 0.0001f;  // dt = 0.1ms
+    open_loop_angle += open_loop_velocity * 0.001f;  // dt = 0.1ms
 
     /* 2. 归一化角度到 [0, 2π] */
     if (open_loop_angle > TWO_PI) {
@@ -279,9 +279,10 @@ void OpenLoop_SpeedTest(void)
 
     /* 5. SVPWM调制 */
     SVPWM_TypeDef svpwm;
-    SVPWM_Calculate(&foc.v_alphabeta, 24.0f, &svpwm);  // 24V供电
-    SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
+    SVPWM_Calculate_Simplified(&foc.v_alphabeta, 24.0f, &svpwm);  
+    SVPWM_GetDutyCycles2(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
     //SPWM_Calculate(&foc,&foc.v_alphabeta,24.0f);
+		//SVPWM_GetDutyCycles(&svpwm,&foc.duty_a,&foc.duty_b,&foc.duty_c);
     /* 6. 更新PWM占空比 */
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
