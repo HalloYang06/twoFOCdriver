@@ -50,3 +50,9 @@ h7foc\freertos.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h
 h7foc\freertos.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
 h7foc\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h
 h7foc\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h
+h7foc\freertos.o: ../Core/Inc/FOC.h
+h7foc\freertos.o: ../Core/Inc/encoder.h
+h7foc\freertos.o: ../Core/Inc/tim.h
+h7foc\freertos.o: ../Core/Inc/current_sense.h
+h7foc\freertos.o: ../Core/Inc/adc.h
+h7foc\freertos.o: ../Core/Inc/pwm_driver.h

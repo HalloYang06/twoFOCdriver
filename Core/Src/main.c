@@ -32,6 +32,10 @@
 #include "current_sense.h"
 #include "pwm_driver.h"
 #include "FOC.h"
+#include "motor.h"
+#include <stdio.h>
+#include <string.h>
+#include "arm_math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,7 +69,15 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+FOC_TypeDef foc;
+Motor_TypeDef motor1;
+CurrentSense_TypeDef current_sense;
 
+/* ==================== 开环速度测试相关变量 ==================== */
+float open_loop_angle = 0.0f;
+float open_loop_velocity = 5.0f;    // 降低速度：10 → 5 rad/s
+float open_loop_voltage = 2.0f;     // 降低电压：5V → 2V，避免启动时过冲
+uint8_t open_loop_enabled = 1;
 /* USER CODE END 0 */
 
 /**
@@ -76,7 +88,13 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  /* ===== 强制启用 FPU ===== */
+  /* STM32H7 的 Cortex-M7 有硬件FPU，必须先启用才能使用浮点运算 */
+  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // CP10和CP11全访问权限
 
+  /* 配置FPU在中断中的自动保存（避免中断中使用浮点时HardFault） */
+  __DSB();  // 数据同步屏障
+  __ISB();  // 指令同步屏障
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -111,6 +129,7 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   /* 初始化PWM驱动，启动6路互补PWM输出 */
+
   PWM_Init();
 
   /* 设置初始占空比为0（电机静止） */
@@ -120,17 +139,39 @@ int main(void)
 
   HAL_TIM_OC_Start(&htim1, TIM_CHANNEL_4); // 启动定时器1通道4，用于电流采样触发ADC1
 
-  HAL_TIM_Base_Start_IT(&htim7); // 启动定时器7中断，用于编码器速度更新，和速度环控制
+  /* 初始化编码器 - 用于开环测试速度反馈 */
+  Encoder_Init(&encoder_M0, &htim3);  // 使用TIM3作为编码器接口
+  Encoder_Start(&encoder_M0);
+
+  /* 初始化FOC控制器 - 用于开环测试 */
+  FOC_Init(&foc, 11, 24.0f);  // 7极对数，24V供电（根据你的电机参数修改）
+
+  HAL_TIM_Base_Start_IT(&htim7); // 启动定时器7中断，用于编码器速度更新和开环角度更新
+
+  /* 串口输出提示信息 */
+  char welcome_msg[] = "\r\n===== 开环速度测试模式 =====\r\n";
+
+
+  /* 调试：闪烁LED确认程序运行 */
+
+
+  /* ===== 低侧MOSFET测试（不需要自举电容）===== */
+  /* 取消下面的注释来测试低侧PWM是否工作 */
+   //PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 1500);  // U相 50% 占空比
+   //PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);     // V相 0%（低侧常关）
+   //PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);     // W相 0%（低侧常关）
+  /* 这样只有 U相低侧MOSFET导通，如果电机抖动说明低侧工作正常 */
+  uint32_t  last_time=0;
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();
+  //osKernelInitialize();
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
+  //MX_FREERTOS_Init();
 
   /* Start scheduler */
-  osKernelStart();
+  //osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -138,7 +179,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
+    uint32_t current_tick=HAL_GetTick();
+    if (current_tick-last_time>=500) {
+      HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+      HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+      HAL_UART_Transmit(&huart4, (uint8_t*)welcome_msg, strlen(welcome_msg), 100);
+      last_time=current_tick;
+    }
+
 
     /* USER CODE BEGIN 3 */
   }
@@ -206,6 +256,80 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+/**
+ * @brief  开环速度测试 - SVPWM输出
+ * @note   在定时器中断中调用，每1ms更新一次
+ * @retval None
+ */
+void OpenLoop_SpeedTest(void)
+{
+    if (!open_loop_enabled) {
+        return;
+    }
+
+    /* 1. 更新开环电角度（积分） */
+    open_loop_angle += open_loop_velocity * 0.001f;  // dt = 1ms
+
+    /* 2. 归一化角度到 [0, 2π] */
+    if (open_loop_angle > TWO_PI) {
+        open_loop_angle -= TWO_PI;
+    }
+
+    /* 3. 计算dq轴电压 (开环模式下，id=0, iq产生转矩) */
+    foc.v_dq.d = 0.0f;
+    foc.v_dq.q = open_loop_voltage;
+
+    /* 4. dq -> αβ 反Park变换 */
+    float cos_theta, sin_theta;
+    arm_sin_cos_f32(open_loop_angle * 57.2987f, &sin_theta, &cos_theta);  // 弧度转度数
+
+    foc.v_alphabeta.alpha = foc.v_dq.d * cos_theta - foc.v_dq.q * sin_theta;
+    foc.v_alphabeta.beta  = foc.v_dq.d * sin_theta + foc.v_dq.q * cos_theta;
+
+    /* 5. SVPWM调制 */
+    SVPWM_TypeDef svpwm;
+    SVPWM_Calculate(&foc.v_alphabeta, 24.0f, &svpwm);  // 24V供电
+    SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
+
+    /* 6. 更新PWM占空比 */
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
+}
+
+/**
+ * @brief  打印速度信息到串口
+ * @note   每500ms打印一次
+ * @retval None
+ */
+void OpenLoop_PrintSpeed(void)
+{
+    static uint32_t print_counter = 0;
+    static uint8_t led_state = 0;
+
+    if (!open_loop_enabled) {
+        return;
+    }
+
+    print_counter++;
+    if (print_counter >= 500) {  // 每500ms打印一次
+        print_counter = 0;
+
+        /* 切换LED状态，确认程序运行 */
+        led_state = !led_state;
+        HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, led_state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+
+        float speed_rpm = Encoder_GetSpeed_RPM(&encoder_M0);
+        float speed_rps = Encoder_GetSpeed_RPS(&encoder_M0);
+        float elec_angle_deg = open_loop_angle * 180.0f / PI;
+
+        char msg[128];
+        sprintf(msg, "[OpenLoop] Target: %.2f rad/s | Speed: %.2f RPM (%.3f RPS) | Angle: %.1f deg\r\n",
+                open_loop_velocity, speed_rpm, speed_rps, elec_angle_deg);
+        HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
+    }
+}
+
 /* USER CODE END 4 */
 
  /* MPU Configuration */
@@ -255,24 +379,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  /* ==================== FOC速度环相关回调 (1kHz) ==================== */
+  /* ==================== 开环测试 / FOC速度环相关回调 (1kHz) ==================== */
 
 /**
- * @brief  TIM定时器周期回调 - FOC速度环主循环
+ * @brief  TIM定时器周期回调 - 开环测试 / FOC速度环主循环
  * @note   TIM7每1ms触发一次
  * @param  htim: 定时器句柄
  * @retval None
  */
-
-
- /* TIM7: 速度环控制 (1kHz) */
+ /* TIM7: 开环测试 / 闭环速度环控制 (1kHz) */
     if (htim == &htim7)
     {
         /* 更新编码器速度 */
         Encoder_UpdateSpeed(&encoder_M0);
 
-        /* 仅在FOC使能时执行速度环 */
-        if (foc.enabled)
+        /* 开环速度测试模式 */
+        if (open_loop_enabled)
+        {
+            OpenLoop_SpeedTest();    // 执行开环SVPWM输出
+            OpenLoop_PrintSpeed();   // 打印速度信息
+        }
+        /* 闭环FOC控制模式 */
+        else if (foc.enabled)
         {
             /* 1. 计算机械角度 (rad) */
             float mechanical_angle = (float)Encoder_GetTotalCount(&encoder_M0)
@@ -285,7 +413,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             foc.omega_elec = Encoder_GetSpeed_RPS(&encoder_M0) * 2.0f * PI * foc.pole_pairs;
 
             /* 4. 速度环PID计算（输出q轴电流目标值） */
-            FOC_ComputeVelocityLoop(&foc);
+            FOC_CalVelocityLoop(&foc);
         }
     }
   /* USER CODE END Callback 1 */

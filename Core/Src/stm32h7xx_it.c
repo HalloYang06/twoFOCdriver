@@ -96,11 +96,15 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+  /* 进入 HardFault，LED2 快闪提示 */
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+    for(volatile uint32_t i = 0; i < 500000; i++);
+    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+    for(volatile uint32_t i = 0; i < 500000; i++);
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
@@ -270,7 +274,6 @@ void TIM7_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
 /* ==================== FOC电流环相关回调 (20kHz) ==================== */
 
 /**
@@ -297,10 +300,10 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
             FOC_UpdateCurrents(&foc, &i_abc);
 
             /* 3. 电流环PID计算 */
-            FOC_ComputeCurrentLoop(&foc);
+            FOC_CalCurrentLoop(&foc);
 
             /* 4. 更新PWM输出（逆Park + SVPWM） */
-            FOC_UpdatePWM(&foc);
+
         }
     }
 }

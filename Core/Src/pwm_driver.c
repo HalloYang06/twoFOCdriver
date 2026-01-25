@@ -19,6 +19,9 @@ void PWM_Init(void)
     /* 启动PWM通道3及其互补通道 */
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
+
+    /* 强制使能TIM1主输出 */
+    __HAL_TIM_MOE_ENABLE(&htim1);
 }
 
 /**

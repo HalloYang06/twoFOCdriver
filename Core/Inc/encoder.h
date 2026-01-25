@@ -38,3 +38,4 @@ void Encoder_ZPulse_Callback(Encoder_TypeDef *encoder);
 uint32_t Encoder_GetRevolutions(Encoder_TypeDef *encoder);
 
 #endif //ENCODER_H
+

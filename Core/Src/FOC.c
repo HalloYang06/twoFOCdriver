@@ -1,9 +1,7 @@
 #include "FOC.h"
-#include "tim.h"
 #include <string.h>
 #include "arm_math.h"
-/* 全局FOC控制器实例 */
-FOC_TypeDef foc;
+/* 注意: 全局FOC实例已移除，FOC控制器现在作为Motor对象的成员 */
 
 /* ==================== PID控制器函数实现 ==================== */
 
@@ -44,24 +42,24 @@ void PID_Reset(PID_TypeDef *pid)
 /**
  * @brief  设置PID目标值
  * @param  pid: PID结构体指针
- * @param  setpoint: 目标值
+ * @param  Target: 目标值
  * @retval None
  */
-void PID_SetSetpoint(PID_TypeDef *pid, float setpoint)
+void PID_SetTarget(PID_TypeDef *pid, float Target)
 {
-    pid->setpoint = setpoint;
+    pid->target = Target;
 }
 
 /**
  * @brief  PID计算
  * @param  pid: PID结构体指针
- * @param  measured_value: 测量值
+ * @param  actual_value: 测量值
  * @retval PID输出值
  */
-float PID_Compute(PID_TypeDef *pid, float measured_value)
+float PID_Cal(PID_TypeDef *pid, float actual_value)
 {
     // 计算误差
-    float error = pid->setpoint - measured_value;
+    float error = pid->target - actual_value;
 
     // 比例项
     float P_term = pid->Kp * error;
@@ -95,7 +93,7 @@ float PID_Compute(PID_TypeDef *pid, float measured_value)
  */
 static inline void Clarke_Transform(PhaseCurrents_TypeDef *i_abc, AlphaBeta_TypeDef *i_alphabeta)
 {
-    // 标准Clarke变换
+
     i_alphabeta->alpha = i_abc->Ia;
     i_alphabeta->beta = ONE_BY_SQRT3 * i_abc->Ia + (2.0f * ONE_BY_SQRT3) * i_abc->Ib;
 }
@@ -123,7 +121,7 @@ static inline void Park_Transform(AlphaBeta_TypeDef *i_alphabeta, float theta, D
  * @param  v_alphabeta: αβ电压输出
  * @retval None
  */
-static inline void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta, AlphaBeta_TypeDef *v_alphabeta)
+void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta, AlphaBeta_TypeDef *v_alphabeta)
 {
     float32_t cos_value,sin_value;
     arm_sin_cos_f32(theta*57.2987f,&sin_value,&cos_value);
@@ -322,7 +320,7 @@ void FOC_Init(FOC_TypeDef *foc_ctrl, uint8_t pole_pairs, float voltage_supply)
 void FOC_SetVelocity(FOC_TypeDef *foc_ctrl, float target_velocity)
 {
     foc_ctrl->target_velocity = _constrainFloat(target_velocity, -FOC_VELOCITY_LIMIT, FOC_VELOCITY_LIMIT);
-    PID_SetSetpoint(&foc_ctrl->pid_velocity, foc_ctrl->target_velocity);
+    PID_SetTarget(&foc_ctrl->pid_velocity, foc_ctrl->target_velocity);
 }
 
 /**
@@ -334,7 +332,7 @@ void FOC_SetVelocity(FOC_TypeDef *foc_ctrl, float target_velocity)
 void FOC_SetCurrent(FOC_TypeDef *foc_ctrl, float target_iq)
 {
     foc_ctrl->target_iq = _constrainFloat(target_iq, -FOC_CURRENT_LIMIT, FOC_CURRENT_LIMIT);
-    PID_SetSetpoint(&foc_ctrl->pid_iq, foc_ctrl->target_iq);
+    PID_SetTarget(&foc_ctrl->pid_iq, foc_ctrl->target_iq);
 }
 
 /**
@@ -372,13 +370,13 @@ void FOC_UpdateAngle(FOC_TypeDef *foc_ctrl, float mechanical_angle)
  * @param  foc_ctrl: FOC控制器指针
  * @retval None
  */
-void FOC_ComputeCurrentLoop(FOC_TypeDef *foc_ctrl)
+void FOC_CalCurrentLoop(FOC_TypeDef *foc_ctrl)
 {
     // d轴电流环
-    foc_ctrl->v_dq.d = PID_Compute(&foc_ctrl->pid_id, foc_ctrl->i_dq.d);
+    foc_ctrl->v_dq.d = PID_Cal(&foc_ctrl->pid_id, foc_ctrl->i_dq.d);
 
     // q轴电流环
-    foc_ctrl->v_dq.q = PID_Compute(&foc_ctrl->pid_iq, foc_ctrl->i_dq.q);
+    foc_ctrl->v_dq.q = PID_Cal(&foc_ctrl->pid_iq, foc_ctrl->i_dq.q);
 
     // 电压幅值限制
     float v_magnitude = sqrtf(foc_ctrl->v_dq.d * foc_ctrl->v_dq.d +
@@ -395,38 +393,14 @@ void FOC_ComputeCurrentLoop(FOC_TypeDef *foc_ctrl)
  * @param  foc_ctrl: FOC控制器指针
  * @retval None
  */
-void FOC_ComputeVelocityLoop(FOC_TypeDef *foc_ctrl)
+void FOC_CalVelocityLoop(FOC_TypeDef *foc_ctrl)
 {
     // 速度环PID输出q轴电流目标值
-    foc_ctrl->target_iq = PID_Compute(&foc_ctrl->pid_velocity, foc_ctrl->omega_elec);
-    PID_SetSetpoint(&foc_ctrl->pid_iq, foc_ctrl->target_iq);
+    foc_ctrl->target_iq = PID_Cal(&foc_ctrl->pid_velocity, foc_ctrl->omega_elec);
+    PID_SetTarget(&foc_ctrl->pid_iq, foc_ctrl->target_iq);
 }
 
-/**
- * @brief  更新PWM输出
- * @param  foc_ctrl: FOC控制器指针
- * @retval None
- */
-void FOC_UpdatePWM(FOC_TypeDef *foc_ctrl)
-{
-    // 反Park变换
-    Inverse_Park_Transform(&foc_ctrl->v_dq, foc_ctrl->theta_elec, &foc_ctrl->v_alphabeta);
-
-    // SVPWM调制
-    SVPWM_TypeDef svpwm;
-    SVPWM_Calculate(&foc_ctrl->v_alphabeta, foc_ctrl->voltage_supply, &svpwm);
-    SVPWM_GetDutyCycles(&svpwm, &foc_ctrl->duty_a, &foc_ctrl->duty_b, &foc_ctrl->duty_c);
-
-    // 转换为PWM比较值
-    uint16_t ccr_a = (uint16_t)(foc_ctrl->duty_a * FOC_PWM_PERIOD);
-    uint16_t ccr_b = (uint16_t)(foc_ctrl->duty_b * FOC_PWM_PERIOD);
-    uint16_t ccr_c = (uint16_t)(foc_ctrl->duty_c * FOC_PWM_PERIOD);
-
-    // 更新PWM
-    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, ccr_a);
-    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, ccr_b);
-    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, ccr_c);
-}
+/* FOC_UpdatePWM 函数已移除 - PWM更新现在由Motor层的硬件抽象层负责 */
 
 /**
  * @brief  使能FOC控制
@@ -452,10 +426,7 @@ void FOC_Disable(FOC_TypeDef *foc_ctrl)
     PID_Reset(&foc_ctrl->pid_iq);
     PID_Reset(&foc_ctrl->pid_velocity);
 
-    // 停止PWM输出
-    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0);
-    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);
-    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);
+    // PWM停止由Motor层的硬件抽象层负责
 }
 
 /**
@@ -466,7 +437,7 @@ void FOC_Disable(FOC_TypeDef *foc_ctrl)
 void FOC_EmergencyStop(FOC_TypeDef *foc_ctrl)
 {
     FOC_Disable(foc_ctrl);
-    PWM_EmergencyStop();
+    // PWM紧急停止由Motor层的硬件抽象层负责
 }
 
 /* ==================== 工具函数实现 ==================== */

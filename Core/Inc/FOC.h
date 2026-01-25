@@ -26,7 +26,7 @@ typedef struct {
     float Ki;               // 积分系数
     float Kd;               // 微分系数
 
-    float setpoint;         // 目标值
+    float target;         // 目标值
     float output;           // 输出值
     float output_limit;     // 输出限制
 
@@ -104,17 +104,16 @@ typedef struct {
 
 } FOC_TypeDef;
 
-/* 全局FOC控制器实例 */
-extern FOC_TypeDef foc;
+/* 注意: FOC控制器不再使用全局实例，而是作为Motor对象的成员 */
 
 /* ==================== PID控制器函数 ==================== */
 void PID_Init(PID_TypeDef *pid, float Kp, float Ki, float Kd, float dt, float output_limit);
-float PID_Compute(PID_TypeDef *pid, float measured_value);
+float PID_Cal(PID_TypeDef *pid, float actual_value);
 void PID_Reset(PID_TypeDef *pid);
-void PID_SetSetpoint(PID_TypeDef *pid, float setpoint);
+void PID_SetTarget(PID_TypeDef *pid, float Target);
 
 /* ==================== 坐标变换函数 ==================== */
-
+void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta, AlphaBeta_TypeDef *v_alphabeta);
 
 /* ==================== SVPWM调制函数 ==================== */
 void SVPWM_Calculate(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *svpwm);
@@ -126,9 +125,9 @@ void FOC_SetVelocity(FOC_TypeDef *foc_ctrl, float target_velocity);
 void FOC_SetCurrent(FOC_TypeDef *foc_ctrl, float target_iq);
 void FOC_UpdateCurrents(FOC_TypeDef *foc_ctrl, PhaseCurrents_TypeDef *i_abc);
 void FOC_UpdateAngle(FOC_TypeDef *foc_ctrl, float mechanical_angle);
-void FOC_ComputeCurrentLoop(FOC_TypeDef *foc_ctrl);
-void FOC_ComputeVelocityLoop(FOC_TypeDef *foc_ctrl);
-void FOC_UpdatePWM(FOC_TypeDef *foc_ctrl);
+void FOC_CalCurrentLoop(FOC_TypeDef *foc_ctrl);
+void FOC_CalVelocityLoop(FOC_TypeDef *foc_ctrl);
+/* FOC_UpdatePWM 已移除，PWM更新由Motor层的硬件抽象层负责 */
 void FOC_Enable(FOC_TypeDef *foc_ctrl);
 void FOC_Disable(FOC_TypeDef *foc_ctrl);
 void FOC_EmergencyStop(FOC_TypeDef *foc_ctrl);

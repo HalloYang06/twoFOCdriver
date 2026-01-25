@@ -44,6 +44,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         Core/Inc/FOC.h
         Core/Src/pwm_driver.c
         Core/Inc/pwm_driver.h
+        Core/Src/motor.c
+        Core/Inc/motor.h
+        Core/Src/motor_hardware.c
+        Core/Inc/motor_hardware.h
 )
 
 # Add STM32CubeMX generated sources
@@ -55,6 +59,8 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 #add libraries
+# 定义CMSISCORE路径，让CMSIS-DSP能找到CMSIS核心头文件
+set(CMSISCORE ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Core)
 add_subdirectory(Drivers/CMSIS-DSP)
 # Link libraries to executable
 target_link_libraries(${CMAKE_PROJECT_NAME} 
@@ -65,6 +71,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
+        ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Core/Include
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS-DSP/Include
 )
 # Add sources to executable

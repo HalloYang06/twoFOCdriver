@@ -40,5 +40,9 @@ h7foc\stm32h7xx_it.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h
 h7foc\stm32h7xx_it.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h
 h7foc\stm32h7xx_it.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/stm32h7xx_it.h
-h7foc\stm32h7xx_it.o: ../Core/Src/encoder.h
+h7foc\stm32h7xx_it.o: ../Core/Inc/encoder.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/tim.h
+h7foc\stm32h7xx_it.o: ../Core/Inc/FOC.h
+h7foc\stm32h7xx_it.o: ../Core/Inc/current_sense.h
+h7foc\stm32h7xx_it.o: ../Core/Inc/adc.h
+h7foc\stm32h7xx_it.o: ../Core/Inc/pwm_driver.h
