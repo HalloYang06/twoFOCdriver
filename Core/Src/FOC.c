@@ -142,76 +142,43 @@ void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta, AlphaBeta_TypeDef *v_
 void SVPWM_Calculate(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *svpwm)
 {
     float Valpha = v_alphabeta->alpha;
-    float Vbeta = v_alphabeta->beta;
+    float Vbeta  = v_alphabeta->beta;
+    
+    // 1. 计算中间变量 (基于归一化，系数调整为 1.732)
+    float inv_vdc = SQRT3 / v_dc;
+    
+    float X = Vbeta * inv_vdc;
+    float Y = (Valpha * 1.5f + Vbeta * SQRT3_BY_2) * (1.0f / v_dc) * SQRT3;
+    float Z = (-Valpha * 1.5f + Vbeta * SQRT3_BY_2) * (1.0f / v_dc) * SQRT3;
 
-    // 计算参考电压在abc坐标系的分量
-    float U1 = Vbeta;
-    float U2 = (-Vbeta / 2.0f) + (SQRT3_BY_2 * Valpha);
-    float U3 = (-Vbeta / 2.0f) - (SQRT3_BY_2 * Valpha);
-
-    // 判断扇区
+    // 2. 扇区判定 (最原始的逻辑)
     uint8_t sector = 0;
-    if (U1 > 0) sector |= 1;
-    if (U2 > 0) sector |= 2;
-    if (U3 > 0) sector |= 4;
+    if (X > 0) sector += 1;
+    if (Y > 0) sector += 2;
+    if (Z > 0) sector += 4;
+    svpwm->sector = sector;
 
-    // 计算矢量作用时间
-    float X = SQRT3 * Vbeta / v_dc;
-    float Y = (3.0f * Valpha / v_dc - X) / 2.0f;
-    float Z = -(3.0f * Valpha / v_dc + X) / 2.0f;
-
-    // PWM周期（归一化为1）
-    float T_pwm = 1.0f;
-
-    // 根据扇区计算T1, T2
+    // 3. 根据扇区分配 T1, T2
+    // 如果电机还是震动，很可能是这里的 T1, T2 对应反了
     switch(sector) {
-        case 3:  // Sector 1
-            svpwm->sector = 1;
-            svpwm->T1 = -Z;
-            svpwm->T2 = -Y;
-            break;
-        case 1:  // Sector 2
-            svpwm->sector = 2;
-            svpwm->T1 = Y;
-            svpwm->T2 = Z;
-            break;
-        case 5:  // Sector 3
-            svpwm->sector = 3;
-            svpwm->T1 = -X;
-            svpwm->T2 = -Z;
-            break;
-        case 4:  // Sector 4
-            svpwm->sector = 4;
-            svpwm->T1 = Z;
-            svpwm->T2 = X;
-            break;
-        case 6:  // Sector 5
-            svpwm->sector = 5;
-            svpwm->T1 = -Y;
-            svpwm->T2 = -X;
-            break;
-        case 2:  // Sector 6
-            svpwm->sector = 6;
-            svpwm->T1 = X;
-            svpwm->T2 = Y;
-            break;
-        default:  // 非法扇区
-            svpwm->sector = 0;
-            svpwm->T1 = 0;
-            svpwm->T2 = 0;
-            break;
+        case 3: svpwm->T1 = Y;  svpwm->T2 = X;  break; // Sector 1
+        case 1: svpwm->T1 = X;  svpwm->T2 = -Z; break; // Sector 2
+        case 5: svpwm->T1 = -Z; svpwm->T2 = -Y; break; // Sector 3
+        case 4: svpwm->T1 = -Y; svpwm->T2 = -X; break; // Sector 4
+        case 6: svpwm->T1 = -X; svpwm->T2 = Z;  break; // Sector 5
+        case 2: svpwm->T1 = Z;  svpwm->T2 = Y;  break; // Sector 6
+        default: svpwm->T1 = 0; svpwm->T2 = 0; break;
     }
 
-    // 限制时间（过调制保护）
-    float sum_T = svpwm->T1 + svpwm->T2;
-    if (sum_T > T_pwm) {
-        float scale = T_pwm / sum_T;
-        svpwm->T1 *= scale;
-        svpwm->T2 *= scale;
+    // 4. 过调制处理
+    float sum = svpwm->T1 + svpwm->T2;
+    if (sum > 1.0f) {
+        svpwm->T1 /= sum;
+        svpwm->T2 /= sum;
+        svpwm->T0 = 0;
+    } else {
+        svpwm->T0 = 1.0f - sum;
     }
-
-    // 计算零矢量时间
-    svpwm->T0 = T_pwm - svpwm->T1 - svpwm->T2;
 }
 /**
  *@brief SPWM计算
@@ -241,52 +208,46 @@ void SPWM_Calculate(FOC_TypeDef *foc,AlphaBeta_TypeDef *v_alphabeta, float vdc) 
  */
 void SVPWM_GetDutyCycles(SVPWM_TypeDef *svpwm, float *duty_a, float *duty_b, float *duty_c)
 {
-    float T0_half = svpwm->T0 / 2.0f;
-    float Ta, Tb, Tc;
+    float T0_half = svpwm->T0 * 0.25f;
+    float T1_half = svpwm->T1 * 0.5f;
+    float T2_half = svpwm->T2 * 0.5f;
 
-    // 七段式SVPWM
+    // 标准七段式：每个周期中心对称
     switch(svpwm->sector) {
-        case 1:
-            Ta = T0_half + svpwm->T1 + svpwm->T2;
-            Tb = T0_half + svpwm->T2;
-            Tc = T0_half;
+        case 3: // Sector 1
+            *duty_a = T0_half + T1_half + T2_half;
+            *duty_b = T0_half + T2_half;
+            *duty_c = T0_half;
             break;
-        case 2:
-            Ta = T0_half + svpwm->T1;
-            Tb = T0_half + svpwm->T1 + svpwm->T2;
-            Tc = T0_half;
+        case 1: // Sector 2
+            *duty_a = T0_half + T1_half;
+            *duty_b = T0_half + T1_half + T2_half;
+            *duty_c = T0_half;
             break;
-        case 3:
-            Ta = T0_half;
-            Tb = T0_half + svpwm->T1 + svpwm->T2;
-            Tc = T0_half + svpwm->T2;
+        case 5: // Sector 3
+            *duty_a = T0_half;
+            *duty_b = T0_half + T1_half + T2_half;
+            *duty_c = T0_half + T2_half;
             break;
-        case 4:
-            Ta = T0_half;
-            Tb = T0_half + svpwm->T1;
-            Tc = T0_half + svpwm->T1 + svpwm->T2;
+        case 4: // Sector 4
+            *duty_a = T0_half;
+            *duty_b = T0_half + T1_half;
+            *duty_c = T0_half + T1_half + T2_half;
             break;
-        case 5:
-            Ta = T0_half + svpwm->T2;
-            Tb = T0_half;
-            Tc = T0_half + svpwm->T1 + svpwm->T2;
+        case 6: // Sector 5
+            *duty_a = T0_half + T2_half;
+            *duty_b = T0_half;
+            *duty_c = T0_half + T1_half + T2_half;
             break;
-        case 6:
-            Ta = T0_half + svpwm->T1 + svpwm->T2;
-            Tb = T0_half;
-            Tc = T0_half + svpwm->T1;
+        case 2: // Sector 6
+            *duty_a = T0_half + T1_half + T2_half;
+            *duty_b = T0_half;
+            *duty_c = T0_half + T1_half;
             break;
         default:
-            Ta = 0.5f;
-            Tb = 0.5f;
-            Tc = 0.5f;
+            *duty_a = 0.5f; *duty_b = 0.5f; *duty_c = 0.5f;
             break;
     }
-
-    // 归一化到[0, 1]
-    *duty_a = _constrainFloat(Ta, 0.0f, 1.0f);
-    *duty_b = _constrainFloat(Tb, 0.0f, 1.0f);
-    *duty_c = _constrainFloat(Tc, 0.0f, 1.0f);
 }
 
 /* ==================== FOC主控制函数实现 ==================== */
