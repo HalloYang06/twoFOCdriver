@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "arm_math.h"
+#include "vofa_debug.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -74,10 +75,10 @@ Motor_TypeDef motor1;
 CurrentSense_TypeDef current_sense;
 
 /* ==================== 开环速度测试相关变量 ==================== */
-float open_loop_angle = 0.0f;
-float open_loop_velocity = 500.0f;    // 降低速度：便于启动
-float open_loop_voltage = 5.0f;     // 提高电压：2V → 6V（24V母线的25%）
-uint8_t open_loop_enabled = 1;
+float open_loop_angle = 0.0f;       // 开环电角度
+float open_loop_velocity = 1500.0f;  // 开环速度（rad/s）最大920
+float open_loop_voltage = 30.0f;    // 开环电压（V）
+uint8_t open_loop_enabled = 1;      // 开环使能标志
 /* USER CODE END 0 */
 
 /**
@@ -89,8 +90,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
   /* ===== 强制启用 FPU ===== */
-  /* STM32H7 的 Cortex-M7 有硬件FPU，必须先启用才能使用浮点运算 */
-  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // CP10和CP11全访问权限
+
+  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
+
 
   /* 配置FPU在中断中的自动保存（避免中断中使用浮点时HardFault） */
   __DSB();  // 数据同步屏障
@@ -128,39 +130,52 @@ int main(void)
   MX_TIM15_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  /* 初始化PWM驱动，启动6路互补PWM输出 */
-
+  /* ===== 初始化PWM驱动 ===== */
   PWM_Init();
 
-  /* 设置初始占空比为0（电机静止） */
+
   PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0); // U相
   PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0); // V相
   PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0); // W相
 
-  HAL_TIM_OC_Start(&htim1, TIM_CHANNEL_4); // 启动定时器1通道4，用于电流采样触发ADC1
+  /* 启动TIM1定时器*/
+  HAL_TIM_Base_Start(&htim1);
 
-  /* 初始化编码器 - 用于开环测试速度反馈 */
+  HAL_TIM_OC_Start(&htim1, TIM_CHANNEL_4);
+
+  /* ===== 初始化编码器 ===== */
   Encoder_Init(&encoder_M0, &htim3);  // 使用TIM3作为编码器接口
   Encoder_Start(&encoder_M0);
 
-  /* 初始化FOC控制器 - 用于开环测试 */
-  FOC_Init(&foc, 11, 24.0f);  // 7极对数，24V供电（根据你的电机参数修改）
+  /* ===== 初始化电流传感器 ===== */
+  CurrentSense_Init(&current_sense, &hadc2);
+  /*校准ADC*/
+  HAL_ADCEx_Calibration_Start (&hadc2, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+  CurrentSense_Calibrate(&current_sense, 5);  
 
-  /* ===== IR2101S 自举电容充电 ===== */
-  /* IR2101S 高侧驱动需要自举电容，必须先让低侧导通给电容充电 */
-  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0);  // 低侧导通
-  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);
-  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);
-  HAL_Delay(100);  // 等待100ms让自举电容充电
+  /* 启动ADC1 DMA采样（循环模式） */
+  //HAL_ADC_Start_DMA(&hadc2, (uint32_t*)current_sense.adc_buffer, CURRENT_BUFFER_SIZE * 2);
 
-  HAL_TIM_Base_Start_IT(&htim7); // 启动定时器7中断，用于编码器速度更新和开环角度更新
+  /* ===== 初始化FOC控制器 ===== */
+  FOC_Init(&foc, 11, 24.0f);  // 11极对数，24V供电（根据你的电机参数修改）
 
-  /* 串口输出提示信息 */
-  char welcome_msg[] = "openloop test";
-	HAL_UART_Transmit(&huart4,(uint8_t*)welcome_msg,10,100);
+  /* ===== 初始化VOFA+调试 ===== */
+  VOFA_Init(&huart4);
+
+  /* ===== 启动定时器中断 ===== */
+  HAL_TIM_Base_Start_IT(&htim7); // 启动定时器7中断，10kHz
 
 
-  uint32_t  last_time=0;
+
+
+  /*
+  const osThreadAttr_t uart_send_task_attributes = {
+    .name = "uart_send_task",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t) osPriorityNormal,
+  };
+  uart_send_task_handle = osThreadNew(uart_send_task, NULL, &uart_send_task_attributes);
+  */
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -182,6 +197,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -259,68 +275,34 @@ void OpenLoop_SpeedTest(void)
     }
 
     /* 1. 更新开环电角度（积分） */
-    open_loop_angle += open_loop_velocity * 0.0001f;  // dt = 1ms
+    open_loop_angle += open_loop_velocity * 0.0001f;  // dt = 0.1ms, rad/s转度/s
 
-    /* 2. 归一化角度到 [0, 2π] */
-    if (open_loop_angle > TWO_PI) {
-        open_loop_angle -= TWO_PI;
+    /* 2. 归一化角度到 [0, 360°] */
+    if (open_loop_angle >=2*PI) {
+        open_loop_angle -= 2*PI;
+    }
+    if (open_loop_angle < 0.0f) {
+        open_loop_angle += 2*PI;
     }
 
     /* 3. 计算dq轴电压 (开环模式下，id=0, iq产生转矩) */
     foc.v_dq.d = 0.0f;
     foc.v_dq.q = open_loop_voltage;
 
-    /* 4. dq -> αβ 反Park变换 */
-    float cos_theta, sin_theta;
-    arm_sin_cos_f32(open_loop_angle * 57.2987f, &sin_theta, &cos_theta);  // 弧度转度数
-
-    foc.v_alphabeta.alpha = foc.v_dq.d * cos_theta - foc.v_dq.q * sin_theta;
-    foc.v_alphabeta.beta  = foc.v_dq.d * sin_theta + foc.v_dq.q * cos_theta;
+    /* 4. dq -> αβ 反Park变换（使用度数） */
+    Inverse_Park_Transform(&foc.v_dq, open_loop_angle, &foc.v_alphabeta);
 
     /* 5. SVPWM调制 */
     SVPWM_TypeDef svpwm;
-    SVPWM_Calculate_Simplified(&foc.v_alphabeta, 24.0f, &svpwm);  
-    SVPWM_GetDutyCycles2(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
-    //SPWM_Calculate(&foc,&foc.v_alphabeta,24.0f);
-		//SVPWM_GetDutyCycles(&svpwm,&foc.duty_a,&foc.duty_b,&foc.duty_c);
+    SVPWM_Calculate(&foc.v_alphabeta, 24.0f, &svpwm);
+    SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
     /* 6. 更新PWM占空比 */
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
 }
 
-/**
- * @brief  打印速度信息到串口
- * @note   每500ms打印一次
- * @retval None
- */
-void OpenLoop_PrintSpeed(void)
-{
-    static uint32_t print_counter = 0;
-    static uint8_t led_state = 0;
 
-    if (!open_loop_enabled) {
-        return;
-    }
-
-    print_counter++;
-    if (print_counter >= 500) {  // 每500ms打印一次
-        print_counter = 0;
-
-        /* 切换LED状态，确认程序运行 */
-        led_state = !led_state;
-        HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, led_state ? GPIO_PIN_SET : GPIO_PIN_RESET);
-
-        float speed_rpm = Encoder_GetSpeed_RPM(&encoder_M0);
-        float speed_rps = Encoder_GetSpeed_RPS(&encoder_M0);
-        float elec_angle_deg = open_loop_angle * 180.0f / PI;
-
-        char msg[200];
-        sprintf(msg, "[OpenLoop] Angle:%.1f deg | Duty: A=%.2f B=%.2f C=%.2f | Vq=%.2f V\r\n",
-                elec_angle_deg, foc.duty_a, foc.duty_b, foc.duty_c, open_loop_voltage);
-        HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
-    }
-}
 
 /* USER CODE END 4 */
 
@@ -371,41 +353,63 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  /* ==================== 开环测试 / FOC速度环相关回调 (1kHz) ==================== */
+  /* ==================== TIM7中断回调 (1kHz) ==================== */
 
-/**
- * @brief  TIM定时器周期回调 - 开环测试 / FOC速度环主循环
- * @note   TIM7每1ms触发一次
- * @param  htim: 定时器句柄
- * @retval None
- */
- /* TIM7: 开环测试 / 闭环速度环控制 (1kHz) */
+ /* TIM7: 1ms周期，用于FOC控制和数据采集 */
     if (htim == &htim7)
     {
         /* 更新编码器速度 */
-        Encoder_UpdateSpeed(&encoder_M0);
-
-        /* 开环速度测试模式 */
+       Encoder_UpdateSpeed(&encoder_M0);
+      /* 开环速度测试模式 */
         if (open_loop_enabled)
         {
             OpenLoop_SpeedTest();    // 执行开环SVPWM输出
-            //OpenLoop_PrintSpeed();   // 打印速度信息
         }
         /* 闭环FOC控制模式 */
         else if (foc.enabled)
         {
-            /* 1. 计算机械角度 (rad) */
-            float mechanical_angle = (float)Encoder_GetTotalCount(&encoder_M0)
-                                   / (4.0f * ENCODER_PPR) * 2.0f * PI;
+            /* 1. 获取电角度（度数，0~2pi） */
+            float elec_angle_rad = Encoder_GetAngle_Elec_Rad(&encoder_M0, foc.pole_pairs);
 
-            /* 2. 更新FOC角度（机械角 → 电角） */
-            FOC_UpdateAngle(&foc, mechanical_angle);
+            /* 2. 更新FOC角度 */
+            FOC_UpdateAngle(&foc, elec_angle_rad);
 
             /* 3. 计算电角速度 (rad/s) */
             foc.omega_elec = Encoder_GetSpeed_RPS(&encoder_M0) * 2.0f * PI * foc.pole_pairs;
 
             /* 4. 速度环PID计算（输出q轴电流目标值） */
             FOC_CalVelocityLoop(&foc);
+        }
+
+        /* ===== VOFA+数据发送===== */
+        static uint16_t vofa_count = 0;
+        vofa_count++;
+        if (vofa_count >= 10000) {  
+            vofa_count = 0;
+            /* 获取当前数据 */
+            float encoder_angle = Encoder_GetAngle_Mech_Deg(&encoder_M0); // 机械角度(度)
+            float encoder_speed = Encoder_GetSpeed_RPS(&encoder_M0);  // 编码器速度(RPS)
+            float current_ia, current_ib, current_ic;
+            CurrentSense_GetCurrents(&current_sense, &current_ia, &current_ib, &current_ic);
+            static uint8_t buffer[100];
+            int len =sprintf(buffer,"angle:%.1f,speed:%.1f,ia:%.1f,ib:%.1f,ic%.1f,id:%.1f,iq:%.1f",encoder_angle,encoder_speed,
+                              current_ia,current_ib,current_ic,foc.i_dq.d,foc.i_dq.q,foc.target_iq);
+            /* 发送到VOFA+ (8个通道) */
+
+            //HAL_UART_Transmit_DMA(&huart4, (uint8_t*) buffer, strlen(buffer));
+            /*
+            VOFA_SendFloat(
+                encoder_angle,          // CH0: 编码器电角度 (度)
+                encoder_speed,          // CH1: 编码器速度 (RPS)
+                current_ia,             // CH2: A相电流 (A)
+                current_ib,             // CH3: B相电流 (A)
+                current_ic,             // CH4: C相电流 (A)
+                foc.i_dq.d,            // CH5: d轴电流 (A)
+                foc.i_dq.q,            // CH6: q轴电流 (A)
+                foc.target_iq          // CH7: 目标q轴电流 (A)
+            );
+            */
+
         }
     }
   /* USER CODE END Callback 1 */

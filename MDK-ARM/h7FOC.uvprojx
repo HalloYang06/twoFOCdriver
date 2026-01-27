@@ -425,6 +425,11 @@
               <FilePath>..\Core\Src\current_sense.c</FilePath>
             </File>
             <File>
+              <FileName>vofa_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\vofa_debug.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>

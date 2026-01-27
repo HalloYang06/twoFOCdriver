@@ -22,19 +22,21 @@ Dialog DLL:      TCM.DLL V1.56.4.0
  
 <h2>Project:</h2>
 C:\Users\27352\Desktop\STM32demo\h7FOC\MDK-ARM\h7FOC.uvprojx
-Project File Date:  01/26/2026
+Project File Date:  01/27/2026
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\KeilMDK\ARM\ARMCC\Bin'
 Build target 'h7FOC'
 compiling main.c...
-../Core/Src/main.c(163): warning:  #177-D: variable "last_time"  was declared but never referenced
-    uint32_t  last_time=0;
-../Core/Src/main.c: 1 warning, 0 errors
+../Core/Src/main.c(395): warning:  #167-D: argument of type "uint8_t *" is incompatible with parameter of type "char *__restrict__"
+              int len =sprintf(buffer,"angle:%.1f,speed:%.1f,ia:%.1f,ib:%.1f,ic%.1f,id:%.1f,iq:%.1f",encoder_angle,encoder_speed,
+../Core/Src/main.c(396): warning:  #225-D: the format string ends before this argument
+                                current_ia,current_ib,current_ic,foc.i_dq.d,foc.i_dq.q,foc.target_iq);
+../Core/Src/main.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=47884 RO-data=3324 RW-data=176 ZI-data=21888  
+Program Size: Code=45904 RO-data=3036 RW-data=252 ZI-data=21984  
 FromELF: creating hex file...
-"h7FOC\h7FOC.axf" - 0 Error(s), 1 Warning(s).
+"h7FOC\h7FOC.axf" - 0 Error(s), 2 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -57,7 +59,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE@6.1.0
       Include file:  CMSIS/Core/Include/tz_context.h
-Build Time Elapsed:  00:00:06
+Build Time Elapsed:  00:00:05
 </pre>
 </body>
 </html>

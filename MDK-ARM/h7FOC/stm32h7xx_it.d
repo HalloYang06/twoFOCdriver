@@ -46,5 +46,8 @@ h7foc\stm32h7xx_it.o: ../Core/Inc/FOC.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/current_sense.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/adc.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/pwm_driver.h
+h7foc\stm32h7xx_it.o: ../Core/Inc/vofa_debug.h
 h7foc\stm32h7xx_it.o: ../Core/Inc/usart.h
+h7foc\stm32h7xx_it.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\string.h
 h7foc\stm32h7xx_it.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdlib.h
+h7foc\stm32h7xx_it.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdio.h

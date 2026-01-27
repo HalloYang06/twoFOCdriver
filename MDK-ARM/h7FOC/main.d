@@ -87,3 +87,4 @@ h7foc\main.o: ../Drivers/CMSIS-DSP/Include/dsp/transform_functions.h
 h7foc\main.o: ../Drivers/CMSIS-DSP/Include/dsp/filtering_functions.h
 h7foc\main.o: ../Drivers/CMSIS-DSP/Include/dsp/quaternion_math_functions.h
 h7foc\main.o: ../Drivers/CMSIS-DSP/Include/dsp/window_functions.h
+h7foc\main.o: ../Core/Inc/vofa_debug.h

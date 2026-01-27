@@ -1,8 +1,8 @@
 Dependencies for Project 'h7FOC', Target 'h7FOC': (DO NOT MODIFY !)
 CompilerVersion: 5060960::V5.06 update 7 (build 960)::ARMCC
-F (startup_stm32h750xx.s)(0x69766119)(--cpu Cortex-M7.fp.dp -g --apcs=interwork -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include--pd "__UVISION_VERSION SETA 540" --pd "STM32H750xx SETA 1" --pd "_RTE_ SETA 1"--list startup_stm32h750xx.lst --xref -o h7foc\startup_stm32h750xx.o --depend h7foc\startup_stm32h750xx.d)
-F (..\Core\Src\encoder.c)(0x69763252)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\encoder.o --omf_browse h7foc\encoder.crf --depend h7foc\encoder.d)
-I (../Core/Inc/encoder.h)(0x69760971)
+F (startup_stm32h750xx.s)(0x69789B1D)(--cpu Cortex-M7.fp.dp -g --apcs=interwork -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include--pd "__UVISION_VERSION SETA 540" --pd "STM32H750xx SETA 1" --pd "_RTE_ SETA 1"--list startup_stm32h750xx.lst --xref -o h7foc\startup_stm32h750xx.o --depend h7foc\startup_stm32h750xx.d)
+F (..\Core\Src\encoder.c)(0x6978A1E8)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\encoder.o --omf_browse h7foc\encoder.crf --depend h7foc\encoder.d)
+I (../Core/Inc/encoder.h)(0x6978A284)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
 I (../Core/Inc/stm32h7xx_hal_conf.h)(0x69668E2D)
@@ -43,8 +43,8 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
 I (../Core/Inc/tim.h)(0x6969086A)
-F (..\Core\Src\FOC.c)(0x6976803E)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\foc.o --omf_browse h7foc\foc.crf --depend h7foc\foc.d)
-I (../Core/Inc/FOC.h)(0x6976803E)
+F (..\Core\Src\FOC.c)(0x69785140)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\foc.o --omf_browse h7foc\foc.crf --depend h7foc\foc.d)
+I (../Core/Inc/FOC.h)(0x69784B96)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
 I (../Core/Inc/stm32h7xx_hal_conf.h)(0x69668E2D)
@@ -84,7 +84,7 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
-I (../Core/Inc/encoder.h)(0x69760971)
+I (../Core/Inc/encoder.h)(0x6978A284)
 I (../Core/Inc/tim.h)(0x6969086A)
 I (../Core/Inc/current_sense.h)(0x696CA5AD)
 I (../Core/Inc/adc.h)(0x696BDA7D)
@@ -115,7 +115,7 @@ I (../Drivers/CMSIS-DSP/Include/dsp/quaternion_math_functions.h)(0x696BEDB3)
 I (../Drivers/CMSIS-DSP/Include/dsp/window_functions.h)(0x696BEDB3)
 F (..\Core\Src\motor.c)(0x697610C7)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\motor.o --omf_browse h7foc\motor.crf --depend h7foc\motor.d)
 I (../Core/Inc/motor.h)(0x696CA5DE)
-I (../Core/Inc/FOC.h)(0x6976803E)
+I (../Core/Inc/FOC.h)(0x69784B96)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
 I (../Core/Inc/stm32h7xx_hal_conf.h)(0x69668E2D)
@@ -155,7 +155,7 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
-I (../Core/Inc/encoder.h)(0x69760971)
+I (../Core/Inc/encoder.h)(0x6978A284)
 I (../Core/Inc/tim.h)(0x6969086A)
 I (../Core/Inc/current_sense.h)(0x696CA5AD)
 I (../Core/Inc/adc.h)(0x696BDA7D)
@@ -208,7 +208,7 @@ I (../Core/Inc/tim.h)(0x6969086A)
 I (../Core/Inc/adc.h)(0x696BDA7D)
 I (../Core/Inc/pwm_driver.h)(0x696BE52E)
 I (../Core/Inc/current_sense.h)(0x696CA5AD)
-I (../Core/Inc/encoder.h)(0x69760971)
+I (../Core/Inc/encoder.h)(0x6978A284)
 I (D:\KeilMDK\ARM\ARMCC\include\string.h)(0x5E8E2EB2)
 F (..\Core\Src\pwm_driver.c)(0x697618D2)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\pwm_driver.o --omf_browse h7foc\pwm_driver.crf --depend h7foc\pwm_driver.d)
 I (../Core/Inc/pwm_driver.h)(0x696BE52E)
@@ -295,7 +295,50 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
 I (../Core/Inc/adc.h)(0x696BDA7D)
 I (D:\KeilMDK\ARM\ARMCC\include\string.h)(0x5E8E2EB2)
-F (../Core/Src/main.c)(0x697688F8)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\main.o --omf_browse h7foc\main.crf --depend h7foc\main.d)
+F (..\Core\Src\vofa_debug.c)(0x69788300)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\vofa_debug.o --omf_browse h7foc\vofa_debug.crf --depend h7foc\vofa_debug.d)
+I (../Core/Inc/vofa_debug.h)(0x69787F1E)
+I (../Core/Inc/main.h)(0x69765A8F)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
+I (../Core/Inc/stm32h7xx_hal_conf.h)(0x69668E2D)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h)(0x69665F85)
+I (../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h)(0x69665F85)
+I (../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h750xx.h)(0x69665F85)
+I (../Drivers/CMSIS/Include/core_cm7.h)(0x69665F12)
+I (D:\KeilMDK\ARM\ARMCC\include\stdint.h)(0x5E8E2EB2)
+I (../Drivers/CMSIS/Include/cmsis_version.h)(0x69665F12)
+I (../Drivers/CMSIS/Include/cmsis_compiler.h)(0x69665F12)
+I (../Drivers/CMSIS/Include/cmsis_armcc.h)(0x69665F12)
+I (../Drivers/CMSIS/Include/mpu_armv7.h)(0x69665F12)
+I (../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h)(0x69665F85)
+I (D:\KeilMDK\ARM\ARMCC\include\stddef.h)(0x5E8E2EB2)
+I (D:\KeilMDK\ARM\ARMCC\include\math.h)(0x5E8E2EB2)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_mdma.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_exti.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_cortex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_adc.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_adc.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_adc_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_flash.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_flash_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_hsem.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_i2c.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_i2c_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pwr_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
+I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
+I (../Core/Inc/usart.h)(0x69787F69)
+I (D:\KeilMDK\ARM\ARMCC\include\string.h)(0x5E8E2EB2)
+F (../Core/Src/main.c)(0x6978B3AE)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\main.o --omf_browse h7foc\main.crf --depend h7foc\main.d)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
 I (../Core/Inc/stm32h7xx_hal_conf.h)(0x69668E2D)
@@ -350,12 +393,12 @@ I (../Core/Inc/adc.h)(0x696BDA7D)
 I (../Core/Inc/dma.h)(0x69668E2C)
 I (../Core/Inc/memorymap.h)(0x69666ECE)
 I (../Core/Inc/tim.h)(0x6969086A)
-I (../Core/Inc/usart.h)(0x6976665A)
+I (../Core/Inc/usart.h)(0x69787F69)
 I (../Core/Inc/gpio.h)(0x69666ECB)
-I (../Core/Inc/encoder.h)(0x69760971)
+I (../Core/Inc/encoder.h)(0x6978A284)
 I (../Core/Inc/current_sense.h)(0x696CA5AD)
 I (../Core/Inc/pwm_driver.h)(0x696BE52E)
-I (../Core/Inc/FOC.h)(0x6976803E)
+I (../Core/Inc/FOC.h)(0x69784B96)
 I (../Core/Inc/motor.h)(0x696CA5DE)
 I (../Core/Inc/motor_hardware.h)(0x696CAA63)
 I (D:\KeilMDK\ARM\ARMCC\include\stdio.h)(0x5E8E2EB2)
@@ -383,6 +426,7 @@ I (../Drivers/CMSIS-DSP/Include/dsp/transform_functions.h)(0x696BEDB3)
 I (../Drivers/CMSIS-DSP/Include/dsp/filtering_functions.h)(0x696BEDB3)
 I (../Drivers/CMSIS-DSP/Include/dsp/quaternion_math_functions.h)(0x696BEDB3)
 I (../Drivers/CMSIS-DSP/Include/dsp/window_functions.h)(0x696BEDB3)
+I (../Core/Inc/vofa_debug.h)(0x69787F1E)
 F (../Core/Src/gpio.c)(0x69765A8B)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\gpio.o --omf_browse h7foc\gpio.crf --depend h7foc\gpio.d)
 I (../Core/Inc/gpio.h)(0x69666ECB)
 I (../Core/Inc/main.h)(0x69765A8F)
@@ -475,7 +519,7 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
 I (../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h)(0x69665F0D)
 I (../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h)(0x69665F0D)
-F (../Core/Src/adc.c)(0x696BF513)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\adc.o --omf_browse h7foc\adc.crf --depend h7foc\adc.d)
+F (../Core/Src/adc.c)(0x6978A365)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\adc.o --omf_browse h7foc\adc.crf --depend h7foc\adc.d)
 I (../Core/Inc/adc.h)(0x696BDA7D)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
@@ -517,7 +561,7 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
 I (../Core/Inc/current_sense.h)(0x696CA5AD)
-F (../Core/Src/dma.c)(0x69765A5E)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\dma.o --omf_browse h7foc\dma.crf --depend h7foc\dma.d)
+F (../Core/Src/dma.c)(0x69789B1A)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\dma.o --omf_browse h7foc\dma.crf --depend h7foc\dma.d)
 I (../Core/Inc/dma.h)(0x69668E2C)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
@@ -599,7 +643,7 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
-F (../Core/Src/tim.c)(0x697686C1)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\tim.o --omf_browse h7foc\tim.crf --depend h7foc\tim.d)
+F (../Core/Src/tim.c)(0x6978A23F)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\tim.o --omf_browse h7foc\tim.crf --depend h7foc\tim.d)
 I (../Core/Inc/tim.h)(0x6969086A)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
@@ -640,8 +684,8 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
-F (../Core/Src/usart.c)(0x69766683)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\usart.o --omf_browse h7foc\usart.crf --depend h7foc\usart.d)
-I (../Core/Inc/usart.h)(0x6976665A)
+F (../Core/Src/usart.c)(0x69789B1A)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\usart.o --omf_browse h7foc\usart.crf --depend h7foc\usart.d)
+I (../Core/Inc/usart.h)(0x69787F69)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
 I (../Core/Inc/stm32h7xx_hal_conf.h)(0x69668E2D)
@@ -681,7 +725,7 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
-F (../Core/Src/stm32h7xx_it.c)(0x69766458)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\stm32h7xx_it.o --omf_browse h7foc\stm32h7xx_it.crf --depend h7foc\stm32h7xx_it.d)
+F (../Core/Src/stm32h7xx_it.c)(0x6978A58A)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\stm32h7xx_it.o --omf_browse h7foc\stm32h7xx_it.crf --depend h7foc\stm32h7xx_it.d)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)
 I (../Core/Inc/stm32h7xx_hal_conf.h)(0x69668E2D)
@@ -721,15 +765,18 @@ I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h)(0x69665F85)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h)(0x69665F85)
-I (../Core/Inc/stm32h7xx_it.h)(0x69765A5F)
-I (../Core/Inc/encoder.h)(0x69760971)
+I (../Core/Inc/stm32h7xx_it.h)(0x69789B1B)
+I (../Core/Inc/encoder.h)(0x6978A284)
 I (../Core/Inc/tim.h)(0x6969086A)
-I (../Core/Inc/FOC.h)(0x6976803E)
+I (../Core/Inc/FOC.h)(0x69784B96)
 I (../Core/Inc/current_sense.h)(0x696CA5AD)
 I (../Core/Inc/adc.h)(0x696BDA7D)
 I (../Core/Inc/pwm_driver.h)(0x696BE52E)
-I (../Core/Inc/usart.h)(0x6976665A)
+I (../Core/Inc/vofa_debug.h)(0x69787F1E)
+I (../Core/Inc/usart.h)(0x69787F69)
+I (D:\KeilMDK\ARM\ARMCC\include\string.h)(0x5E8E2EB2)
 I (D:\KeilMDK\ARM\ARMCC\include\stdlib.h)(0x5E8E2EB2)
+I (D:\KeilMDK\ARM\ARMCC\include\stdio.h)(0x5E8E2EB2)
 F (../Core/Src/stm32h7xx_hal_msp.c)(0x69666ECE)(--c99 --gnu -c --cpu Cortex-M7.fp.dp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc -I ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/CMSIS-DSP/Include-I.\RTE\_h7FOC-ID:\KeilMDK\ARM\PACK\ARM\CMSIS\6.1.0\CMSIS\Core\Include-D__UVISION_VERSION="540" -DSTM32H750xx -D_RTE_ -DUSE_PWR_LDO_SUPPLY -DUSE_HAL_DRIVER -DSTM32H750xx -DARM_MATH_DSP -DARM_MATH_MATRIX_CHECK -DARM_MATH_ROUNDING-o h7foc\stm32h7xx_hal_msp.o --omf_browse h7foc\stm32h7xx_hal_msp.crf --depend h7foc\stm32h7xx_hal_msp.d)
 I (../Core/Inc/main.h)(0x69765A8F)
 I (../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h)(0x69665F85)

@@ -10,7 +10,7 @@
 
 // 编码器参数定义
 #define ENCODER_PPR         1024    // 编码器线数（每转脉冲数，根据实际编码器修改）
-#define ENCODER_SAMPLE_TIME 0.01f   // 采样时间（秒），即多久计算一次转速
+#define ENCODER_SAMPLE_TIME 0.0001f   // 采样时间（秒），即多久计算一次转速
 
 // 编码器数据结构
 typedef struct {
@@ -22,6 +22,7 @@ typedef struct {
     float    speed_rps;             // 转速（RPS，转/秒）
     uint32_t zPulseCount;           // Z相脉冲计数（圈数）
     uint8_t  direction;             // 旋转方向（0=正转，1=反转）
+    uint8_t  pole_pairs;            // 电机极对数（用于计算电角度）
 } Encoder_TypeDef;
 
 // 函数声明
@@ -36,6 +37,10 @@ float Encoder_GetSpeed_RPS(Encoder_TypeDef *encoder);
 void Encoder_Reset(Encoder_TypeDef *encoder);
 void Encoder_ZPulse_Callback(Encoder_TypeDef *encoder);
 uint32_t Encoder_GetRevolutions(Encoder_TypeDef *encoder);
-
+float Encoder_GetAngle_Mech_Deg(Encoder_TypeDef *encoder);
+float Encoder_GetAngle_Mech_Rad(Encoder_TypeDef *encoder);
+float Encoder_GetAngle_Elec_Deg(Encoder_TypeDef *encoder, uint8_t pole_pairs);
+float Encoder_GetAngle_Elec_Rad(Encoder_TypeDef *encoder, uint8_t pole_pairs);
+void Encoder_SetPolePairs(Encoder_TypeDef *encoder, uint8_t pole_pairs);
 #endif //ENCODER_H
 

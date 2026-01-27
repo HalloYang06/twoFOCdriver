@@ -35,9 +35,10 @@ extern "C" {
 extern UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN Private defines */
-#define RX_BUF_SIZE 128
-extern  uint8_t rx_buf[RX_BUF_SIZE];
-extern  uint8_t process_buf[RX_BUF_SIZE];
+
+#define TX_BUF_SIZE 128
+//extern  uint8_t rx_buf[RX_BUF_SIZE];
+//extern  uint8_t process_buf[RX_BUF_SIZE];
 extern  float open_loop_velocity;
   typedef  struct {
     uint8_t header1 ;

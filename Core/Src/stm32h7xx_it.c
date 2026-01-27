@@ -25,6 +25,7 @@
 #include "encoder.h"
 #include "FOC.h"
 #include "current_sense.h"
+#include "vofa_debug.h"
 #include "usart.h"
 #include "stdlib.h"
 /* USER CODE END Includes */
@@ -40,6 +41,11 @@ extern Encoder_TypeDef encoder_M2;      // 在main.c中定义
 extern Encoder_TypeDef encoder_M0;      // FOC控制的编码器
 extern FOC_TypeDef foc;                 // FOC控制器
 extern CurrentSense_TypeDef current_sense; // 电流采样
+extern TIM_HandleTypeDef htim1;         // PWM定时器
+extern uint8_t rx_buf[];                // 串口接收缓冲
+extern uint8_t open_loop_enabled;       // 开环使能标志
+extern float open_loop_velocity;        // 开环速度
+#define RX_BUF_SIZE 16                  // 接收缓冲区大小
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -64,6 +70,7 @@ extern CurrentSense_TypeDef current_sense; // 电流采样
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
+extern DMA_HandleTypeDef hdma_adc2;
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 extern TIM_HandleTypeDef htim3;
@@ -74,7 +81,7 @@ extern UART_HandleTypeDef huart4;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
-
+#include "stdio.h"
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -236,6 +243,20 @@ void DMA1_Stream2_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 stream3 global interrupt.
+  */
+void DMA1_Stream3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream3_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc2);
+  /* USER CODE BEGIN DMA1_Stream3_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream3_IRQn 1 */
+}
+
+/**
   * @brief This function handles ADC1 and ADC2 global interrupts.
   */
 void ADC_IRQHandler(void)
@@ -284,23 +305,9 @@ void TIM3_IRQHandler(void)
 void UART4_IRQHandler(void)
 {
   /* USER CODE BEGIN UART4_IRQn 0 */
-  if (__HAL_UART_GET_FLAG(&huart4,UART_FLAG_IDLE) != RESET) {
-    __HAL_UART_CLEAR_IDLEFLAG(&huart4);//清除中断空闲标志位
-    //停止DMA,防止覆盖
-    HAL_UART_DMAStop(&huart4);
-    //计算接收的数据长度
-    uint8_t len=RX_BUF_SIZE-__HAL_DMA_GET_COUNTER(huart4.hdmarx);
-    //开始处理数据
-    rx_buf[len]="\0";
-    float speed_cmd=(float)atof((char*)rx_buf);
-    if (speed_cmd <= 100.0f && speed_cmd >=-100.f) {
-      open_loop_velocity =speed_cmd;
-    }
 
-    //重新开启DMA接收
-    HAL_UART_Receive_DMA(&huart4, rx_buf, RX_BUF_SIZE);
 
-  }
+  
 
   /* USER CODE END UART4_IRQn 0 */
   HAL_UART_IRQHandler(&huart4);
@@ -348,8 +355,21 @@ void TIM7_IRQHandler(void)
  */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
-    if (hadc == &hadc1)
+    if (hadc == &hadc2)
     {
+      if (hadc == &hadc2)
+      {
+        static uint16_t test_cnt = 0;
+        if (++test_cnt >= 10000) {  // 每0.5秒打印一次（20kHz / 10000 = 2Hz）
+          test_cnt = 0;
+
+          char buf[100];
+          sprintf(buf, "ADC: %d, %d, %d\r\n",
+                  current_sense.adc_buffer[0],
+                  current_sense.adc_buffer[1],
+                  current_sense.adc_buffer[2]);
+          HAL_UART_Transmit(&huart4, (uint8_t*)buf, strlen(buf), 100);
+        }
         /* 更新电流采样数据 */
         CurrentSense_DMA_CpltCallback(&current_sense);
 
@@ -366,12 +386,22 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
             /* 3. 电流环PID计算 */
             FOC_CalCurrentLoop(&foc);
 
-            /* 4. 更新PWM输出（逆Park + SVPWM） */
+            /* 4. 逆Park变换 (dq -> αβ) */
+            Inverse_Park_Transform(&foc.v_dq, foc.theta_elec, &foc.v_alphabeta);
 
+            /* 5. SVPWM调制 */
+            SVPWM_TypeDef svpwm;
+            SVPWM_Calculate(&foc.v_alphabeta, foc.voltage_supply, &svpwm);
+            SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
+
+            /* 6. 更新PWM占空比 */
+            PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
+            PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
+            PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
         }
     }
+	}
 }
-
 /**
  * @brief  ADC DMA半完成回调 - FOC不使用此回调
  * @note   如果使用双缓冲模式，可以在这里处理前半部分数据
@@ -380,12 +410,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
  */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
-    if (hadc == &hadc1)
-    {
+
+
         /* FOC电流环不使用半完成回调 */
         /* 如果需要双缓冲，可以在这里处理 */
         CurrentSense_DMA_HalfCpltCallback(&current_sense);
-    }
+    
 }
 
 /* ==================== 编码器相关回调 ==================== */
@@ -403,6 +433,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         Encoder_ZPulse_Callback(&encoder_M2);
     }
 
+}
+
+/**
+ *@ UART发送终端回调函数
+ * @param  huart: UART句柄
+ * @retval None
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == UART4) {
+      // tx_done = 1;  // 修复：应该是赋值，不是比较
+
+      /* VOFA+ DMA发送完成回调 */
+      VOFA_UART_TxCpltCallback(huart);
+  }
 }
 
 /* USER CODE END 1 */

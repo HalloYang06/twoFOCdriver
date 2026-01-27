@@ -101,14 +101,14 @@ static inline void Clarke_Transform(PhaseCurrents_TypeDef *i_abc, AlphaBeta_Type
 /**
  * @brief  Park变换 (αβ -> dq)
  * @param  i_alphabeta: αβ电流
- * @param  theta: 电角度 (rad)
+ * @param  theta_rad: 电角度（弧度，0~2π）
  * @param  i_dq: dq电流输出
  * @retval None
  */
-static inline void Park_Transform(AlphaBeta_TypeDef *i_alphabeta, float theta, DQ_TypeDef *i_dq)
+static inline void Park_Transform(AlphaBeta_TypeDef *i_alphabeta, float theta_rad, DQ_TypeDef *i_dq)
 {
-    float32_t cos_value,sin_value;
-    arm_sin_cos_f32(theta*57.2987f,&sin_value,&cos_value);
+    float32_t cos_value, sin_value;
+    arm_sin_cos_f32(theta_rad * 57.2987f, &sin_value, &cos_value);  // 弧度转度数
 
     i_dq->d = i_alphabeta->alpha * cos_value + i_alphabeta->beta * sin_value;
     i_dq->q = -i_alphabeta->alpha * sin_value + i_alphabeta->beta * cos_value;
@@ -117,14 +117,14 @@ static inline void Park_Transform(AlphaBeta_TypeDef *i_alphabeta, float theta, D
 /**
  * @brief  反Park变换 (dq -> αβ)
  * @param  v_dq: dq电压
- * @param  theta: 电角度 (rad)
+ * @param  theta_rad: 电角度（弧度，0~2π）
  * @param  v_alphabeta: αβ电压输出
  * @retval None
  */
-void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta, AlphaBeta_TypeDef *v_alphabeta)
+void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta_rad, AlphaBeta_TypeDef *v_alphabeta)
 {
-    float32_t cos_value,sin_value;
-    arm_sin_cos_f32(theta*57.2987f,&sin_value,&cos_value);
+    float32_t cos_value, sin_value;
+    arm_sin_cos_f32(theta_rad * 57.2987f, &sin_value, &cos_value);  // 弧度转度数
 
     v_alphabeta->alpha = v_dq->d * cos_value - v_dq->q * sin_value;
     v_alphabeta->beta = v_dq->d * sin_value + v_dq->q * cos_value;
@@ -140,118 +140,8 @@ void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta, AlphaBeta_TypeDef *v_
  * @retval None
  */
 void SVPWM_Calculate(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *svpwm)
-{
-    float Valpha = v_alphabeta->alpha;
-    float Vbeta  = v_alphabeta->beta;
-    
-    // 1. 计算中间变量 (基于归一化，系数调整为 1.732)
-    float inv_vdc = SQRT3 / v_dc;
-    
-    float X = Vbeta * inv_vdc;
-    float Y = (Valpha * 1.5f + Vbeta * SQRT3_BY_2) * (1.0f / v_dc) * SQRT3;
-    float Z = (-Valpha * 1.5f + Vbeta * SQRT3_BY_2) * (1.0f / v_dc) * SQRT3;
-
-    // 2. 扇区判定 (最原始的逻辑)
-    uint8_t sector = 0;
-    if (X > 0) sector += 1;
-    if (Y > 0) sector += 2;
-    if (Z > 0) sector += 4;
-    svpwm->sector = sector;
-
-    // 3. 根据扇区分配 T1, T2
-    // 如果电机还是震动，很可能是这里的 T1, T2 对应反了
-    switch(sector) {
-        case 3: svpwm->T1 = Y;  svpwm->T2 = X;  break; // Sector 1
-        case 1: svpwm->T1 = X;  svpwm->T2 = -Z; break; // Sector 2
-        case 5: svpwm->T1 = -Z; svpwm->T2 = -Y; break; // Sector 3
-        case 4: svpwm->T1 = -Y; svpwm->T2 = -X; break; // Sector 4
-        case 6: svpwm->T1 = -X; svpwm->T2 = Z;  break; // Sector 5
-        case 2: svpwm->T1 = Z;  svpwm->T2 = Y;  break; // Sector 6
-        default: svpwm->T1 = 0; svpwm->T2 = 0; break;
-    }
-
-    // 4. 过调制处理
-    float sum = svpwm->T1 + svpwm->T2;
-    if (sum > 1.0f) {
-        svpwm->T1 /= sum;
-        svpwm->T2 /= sum;
-        svpwm->T0 = 0;
-    } else {
-        svpwm->T0 = 1.0f - sum;
-    }
-}
-/**
- *@brief SPWM计算
- * @param  foc: FOC结构体
- * @param  v_alphabeta :alphabeta结构体
- * @param  vdc:母线电压
- * @retval none
- */
-void SPWM_Calculate(FOC_TypeDef *foc,AlphaBeta_TypeDef *v_alphabeta, float vdc) {
-    float v_a=v_alphabeta->alpha;
-    float v_b=-0.5f*v_alphabeta->alpha+0.8660254*v_alphabeta->beta;
-    float v_c=-0.8660254*v_alphabeta->alpha-0.5f*v_alphabeta->beta;
-    foc->duty_c = v_c / vdc+0.5;
-    foc->duty_a = v_a / vdc+0.5;
-    foc->duty_b = v_b / vdc+0.5;
-    if (foc->duty_a>1.0f) foc->duty_a=1.0f;if (foc->duty_a<0.0f) foc->duty_a=0.0f;
-    if (foc->duty_b>1.0f) foc->duty_b=1.0f;if (foc->duty_b<0.0f) foc->duty_b=0.0f;
-    if (foc->duty_c>1.0f) foc->duty_c=1.0f;if (foc->duty_c<0.0f) foc->duty_c=0.0f;
-}
-/**
- * @brief  根据SVPWM计算三相占空比
- * @param  svpwm: SVPWM结构体
- * @param  duty_a: A相占空比输出
- * @param  duty_b: B相占空比输出
- * @param  duty_c: C相占空比输出
- * @retval None
- */
-void SVPWM_GetDutyCycles(SVPWM_TypeDef *svpwm, float *duty_a, float *duty_b, float *duty_c)
-{
-    float T0_half = svpwm->T0 * 0.25f;
-    float T1_half = svpwm->T1 * 0.5f;
-    float T2_half = svpwm->T2 * 0.5f;
-
-    // 标准七段式：每个周期中心对称
-    switch(svpwm->sector) {
-        case 3: // Sector 1
-            *duty_a = T0_half + T1_half + T2_half;
-            *duty_b = T0_half + T2_half;
-            *duty_c = T0_half;
-            break;
-        case 1: // Sector 2
-            *duty_a = T0_half + T1_half;
-            *duty_b = T0_half + T1_half + T2_half;
-            *duty_c = T0_half;
-            break;
-        case 5: // Sector 3
-            *duty_a = T0_half;
-            *duty_b = T0_half + T1_half + T2_half;
-            *duty_c = T0_half + T2_half;
-            break;
-        case 4: // Sector 4
-            *duty_a = T0_half;
-            *duty_b = T0_half + T1_half;
-            *duty_c = T0_half + T1_half + T2_half;
-            break;
-        case 6: // Sector 5
-            *duty_a = T0_half + T2_half;
-            *duty_b = T0_half;
-            *duty_c = T0_half + T1_half + T2_half;
-            break;
-        case 2: // Sector 6
-            *duty_a = T0_half + T1_half + T2_half;
-            *duty_b = T0_half;
-            *duty_c = T0_half + T1_half;
-            break;
-        default:
-            *duty_a = 0.5f; *duty_b = 0.5f; *duty_c = 0.5f;
-            break;
-    }
-}
-void SVPWM_Calculate_Simplified(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *svpwm)
-{
-    // 1. 基础三相电压合成 (Inverse Clarke)
+{ 
+		// 1. 基础三相电压合成 (Inverse Clarke)
     float va = v_alphabeta->alpha;
     float vb = -0.5f * v_alphabeta->alpha + SQRT3_BY_2 * v_alphabeta->beta;
     float vc = -0.5f * v_alphabeta->alpha - SQRT3_BY_2 * v_alphabeta->beta;
@@ -269,13 +159,41 @@ void SVPWM_Calculate_Simplified(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPW
     svpwm->T2 = (vb - v_offset) / v_dc + 0.5f; // B相比例
     svpwm->T0 = (vc - v_offset) / v_dc + 0.5f; // C相比例
 }
-void SVPWM_GetDutyCycles2(SVPWM_TypeDef *svpwm, float *duty_a, float *duty_b, float *duty_c)
+
+/**
+ *@brief SPWM计算
+ * @param  foc: FOC结构体
+ * @param  v_alphabeta :alphabeta结构体
+ * @param  vdc:母线电压
+ * @retval none
+ */
+void SPWM_Calculate(FOC_TypeDef *foc,AlphaBeta_TypeDef *v_alphabeta, float vdc) {
+    float v_a=v_alphabeta->alpha;
+    float v_b=-0.5f*v_alphabeta->alpha+0.8660254f*v_alphabeta->beta;
+    float v_c=-0.8660254*v_alphabeta->alpha-0.5f*v_alphabeta->beta;
+    foc->duty_c = v_c / vdc+0.5f;
+    foc->duty_a = v_a / vdc+0.5f;
+    foc->duty_b = v_b / vdc+0.5f;
+    if (foc->duty_a>1.0f) foc->duty_a=1.0f;if (foc->duty_a<0.0f) foc->duty_a=0.0f;
+    if (foc->duty_b>1.0f) foc->duty_b=1.0f;if (foc->duty_b<0.0f) foc->duty_b=0.0f;
+    if (foc->duty_c>1.0f) foc->duty_c=1.0f;if (foc->duty_c<0.0f) foc->duty_c=0.0f;
+}
+/**
+ * @brief  根据SVPWM计算三相占空比
+ * @param  svpwm: SVPWM结构体
+ * @param  duty_a: A相占空比输出
+ * @param  duty_b: B相占空比输出
+ * @param  duty_c: C相占空比输出
+ * @retval None
+ */
+void SVPWM_GetDutyCycles(SVPWM_TypeDef *svpwm, float *duty_a, float *duty_b, float *duty_c)
 {
     // 限制在有效范围内，防止过调制
     *duty_a = _constrainFloat(svpwm->T1, 0.0f, 1.0f);
     *duty_b = _constrainFloat(svpwm->T2, 0.0f, 1.0f);
     *duty_c = _constrainFloat(svpwm->T0, 0.0f, 1.0f);
 }
+
 /* ==================== FOC主控制函数实现 ==================== */
 
 /**
@@ -306,7 +224,7 @@ void FOC_Init(FOC_TypeDef *foc_ctrl, uint8_t pole_pairs, float voltage_supply)
     PID_Init(&foc_ctrl->pid_velocity, 0.5f, 2.0f, 0.01f, 0.001f, FOC_CURRENT_LIMIT);
 
     // 设置目标值
-    foc_ctrl->target_id = 0.0f;  // d轴电流通常设为0（PMSM最大转矩/电流比控制）
+    foc_ctrl->target_id = 0.0f;  // d轴电流通常设为0
     foc_ctrl->target_iq = 0.0f;
     foc_ctrl->target_velocity = 0.0f;
 
@@ -360,13 +278,13 @@ void FOC_UpdateCurrents(FOC_TypeDef *foc_ctrl, PhaseCurrents_TypeDef *i_abc)
 /**
  * @brief  更新转子角度
  * @param  foc_ctrl: FOC控制器指针
- * @param  mechanical_angle: 机械角度 (rad)
+ * @param  electrical_angle_deg: 电角度 (rad)
  * @retval None
  */
-void FOC_UpdateAngle(FOC_TypeDef *foc_ctrl, float mechanical_angle)
+void FOC_UpdateAngle(FOC_TypeDef *foc_ctrl, float electrical_rad)
 {
-    // 计算电角度
-    foc_ctrl->theta_elec = _electricalAngle(mechanical_angle, foc_ctrl->pole_pairs);
+    // 直接存储电角度（弧数）
+    foc_ctrl->theta_elec = electrical_rad;
 }
 
 /**

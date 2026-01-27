@@ -21,8 +21,10 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-uint8_t rx_buf[RX_BUF_SIZE];
-uint8_t process_buf[RX_BUF_SIZE];
+//uint8_t rx_buf[RX_BUF_SIZE];
+//uint8_t process_buf[RX_BUF_SIZE];
+uint8_t tx_done=0;
+uint8_t tx_buf[TX_BUF_SIZE];
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart4;
@@ -135,7 +137,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_uart4_tx.Init.MemInc = DMA_MINC_ENABLE;
     hdma_uart4_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
     hdma_uart4_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    hdma_uart4_tx.Init.Mode = DMA_NORMAL;
+    hdma_uart4_tx.Init.Mode = DMA_CIRCULAR;
     hdma_uart4_tx.Init.Priority = DMA_PRIORITY_LOW;
     hdma_uart4_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_uart4_tx) != HAL_OK)
@@ -198,13 +200,19 @@ void UART_Data_process(uint8_t *buf,uint8_t len) {
         if (package->cmd ==0x01) {
           open_loop_velocity=package->data;
         }
-
       }
-
     }
-
+  }
+}
+/*
+void UART_Send(uint8_t *pdata,uint16_t len){
+  if (tx_done==1 && len>0 && len<RX_BUF_SIZE) {
+      tx_done = 0;
+      memcpy(tx_buf,pdata, len);
+      HAL_UART_Transmit_IT(&huart4, tx_buf, len);
   }
 
-}
 
+}
+*/
 /* USER CODE END 1 */

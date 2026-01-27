@@ -84,6 +84,7 @@ void Encoder_UpdateSpeed(Encoder_TypeDef *encoder)
 
     // 计算本次采样周期内的计数差值
     encoder->deltaCount = currentCount - encoder->lastCount;
+    encoder->totalCount+=encoder->deltaCount;
     encoder->lastCount = currentCount;
 
     // 判断旋转方向
@@ -160,3 +161,94 @@ uint32_t Encoder_GetRevolutions(Encoder_TypeDef *encoder)
 {
     return encoder->zPulseCount;
 }
+/**
+ * @brief  设置电机极对数
+ * @param  encoder: 编码器结构体指针
+ * @param  pole_pairs: 极对数
+ * @retval None
+ */
+void Encoder_SetPolePairs(Encoder_TypeDef *encoder, uint8_t pole_pairs)
+{
+    encoder->pole_pairs = pole_pairs;
+}
+
+/**
+ * @brief  获取机械角度（角度制）
+ * @param  encoder: 编码器结构体指针
+ * @retval 角度（度），范围 0~360
+ */
+float Encoder_GetAngle_Mech_Deg(Encoder_TypeDef *encoder)
+{
+    int32_t total_cnt = encoder->totalCount;
+
+    /* 计算机械角度
+     * totalCount 是累计计数值
+     * 四倍频模式：一圈 = 4 * PPR 个计数
+     * 角度(度) = (计数 / (4 * PPR)) * 360
+     * 然后对360取模，得到0~360度范围内的角度
+     */
+    float angle_deg = ((float)total_cnt / (4.0f * ENCODER_PPR)) * 360.0f;
+
+    /* 归一化到 0~360 度 */
+    while (angle_deg >= 360.0f) {
+        angle_deg -= 360.0f;
+    }
+    while (angle_deg < 0.0f) {
+        angle_deg += 360.0f;
+    }
+
+    return angle_deg;
+}
+
+/**
+ * @brief  获取机械角度（弧度制）
+ * @param  encoder: 编码器结构体指针
+ * @retval 角度（弧度），范围 0~2π
+ */
+float Encoder_GetAngle_Mech_Rad(Encoder_TypeDef *encoder)
+{
+    /* 先获取度数，再转换为弧度 */
+    float angle_deg = Encoder_GetAngle_Mech_Deg(encoder);
+    float angle_rad = angle_deg * 0.0174532925f;  // deg * (PI / 180)
+
+    return angle_rad;
+}
+
+/**
+ * @brief  获取电角度（角度制）
+ * @param  encoder: 编码器结构体指针
+ * @param  pole_pairs: 电机极对数
+ * @retval 电角度（度），范围 0~360
+ */
+float Encoder_GetAngle_Elec_Deg(Encoder_TypeDef *encoder, uint8_t pole_pairs)
+{
+    /* 电角度 = 机械角度 × 极对数 */
+    float mech_angle_deg = Encoder_GetAngle_Mech_Deg(encoder);
+    float elec_angle_deg = mech_angle_deg * pole_pairs;
+
+    /* 归一化到 0~360 度 */
+    while (elec_angle_deg >= 360.0f) {
+        elec_angle_deg -= 360.0f;
+    }
+    while (elec_angle_deg < 0.0f) {
+        elec_angle_deg += 360.0f;
+    }
+
+    return elec_angle_deg;
+}
+
+/**
+ * @brief  获取电角度（弧度制）
+ * @param  encoder: 编码器结构体指针
+ * @param  pole_pairs: 电机极对数
+ * @retval 电角度（弧度），范围 0~2π
+ */
+float Encoder_GetAngle_Elec_Rad(Encoder_TypeDef *encoder, uint8_t pole_pairs)
+{
+    /* 先获取电角度（度），再转换为弧度 */
+    float elec_angle_deg = Encoder_GetAngle_Elec_Deg(encoder, pole_pairs);
+    float elec_angle_rad = elec_angle_deg * 0.0174532925f;  // deg * (PI / 180)
+
+    return elec_angle_rad;
+}
+

@@ -6,6 +6,7 @@
 "h7foc\motor_hardware.o"
 "h7foc\pwm_driver.o"
 "h7foc\current_sense.o"
+"h7foc\vofa_debug.o"
 "h7foc\main.o"
 "h7foc\gpio.o"
 "h7foc\freertos.o"
