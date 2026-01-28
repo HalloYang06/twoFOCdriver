@@ -61,7 +61,6 @@ void MotorHAL_PWM_Stop(MotorHAL_TypeDef *hal)
  * @param  duty_v: V相占空比 (0.0 ~ 1.0)
  * @param  duty_w: W相占空比 (0.0 ~ 1.0)
  * @retval None
- * @note   内部调用原有的PWM_SetDutyCycle函数
  */
 void MotorHAL_PWM_SetDutyCycle(MotorHAL_TypeDef *hal, float duty_u, float duty_v, float duty_w)
 {
@@ -89,7 +88,6 @@ void MotorHAL_PWM_SetDutyCycle(MotorHAL_TypeDef *hal, float duty_u, float duty_v
  * @brief  初始化ADC电流采样
  * @param  hal: 硬件抽象层指针
  * @retval None
- * @note   调用原有的CurrentSense_Init和CurrentSense_Start
  */
 void MotorHAL_CurrentSense_Init(MotorHAL_TypeDef *hal)
 {
@@ -108,11 +106,9 @@ void MotorHAL_CurrentSense_Init(MotorHAL_TypeDef *hal)
  * @param  current_v: V相电流输出 (A)
  * @param  current_w: W相电流输出 (A)
  * @retval None
- * @note   调用原有的CurrentSense_GetCurrents，使用DMA和滤波功能
  */
 void MotorHAL_CurrentSense_Read(MotorHAL_TypeDef *hal, float *current_u, float *current_v, float *current_w)
 {
-    // 调用原有驱动获取滤波后的电流
     CurrentSense_GetCurrents(&hal->current_sense, current_u, current_v, current_w);
 }
 
@@ -124,7 +120,6 @@ void MotorHAL_CurrentSense_Read(MotorHAL_TypeDef *hal, float *current_u, float *
  */
 void MotorHAL_CurrentSense_Calibrate(MotorHAL_TypeDef *hal)
 {
-    // 调用原有驱动的校准功能
     CurrentSense_Calibrate(&hal->current_sense, 100);  // 采样100次求平均
 }
 
@@ -156,7 +151,6 @@ float MotorHAL_Encoder_GetAngle(MotorHAL_TypeDef *hal)
     int16_t count = Encoder_GetCount(&hal->encoder);
 
     // 转换为角度 (rad)
-    // 假设编码器PPR在encoder结构体初始化时已设置
     float angle = ((float)count / (float)ENCODER_PPR) * 2.0f * 3.14159265359f;
 
     // 应用偏移
@@ -225,7 +219,6 @@ void MotorHAL_EmergencyStop(MotorHAL_TypeDef *hal)
     // 立即停止PWM输出
     MotorHAL_PWM_Stop(hal);
 
-    // 设置占空比为50%（电机静止）
     uint16_t half_duty = hal->pwm_config.period / 2;
     __HAL_TIM_SET_COMPARE(hal->pwm_config.timer, hal->pwm_config.channel_u, half_duty);
     __HAL_TIM_SET_COMPARE(hal->pwm_config.timer, hal->pwm_config.channel_v, half_duty);

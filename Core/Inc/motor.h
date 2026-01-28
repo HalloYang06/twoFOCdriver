@@ -35,8 +35,8 @@ typedef struct {
 /* 电机对象 */
 typedef struct {
     /* 基本信息 */
-    uint8_t id;                    // 电机ID (1, 2, ...)
-    char name[16];                 // 电机名称（用于调试）
+    uint8_t id;                    // 电机ID
+    char name[16];                 // 电机名称
 
     /* 控制层 */
     FOC_TypeDef foc;               // FOC控制器实例
@@ -85,7 +85,7 @@ void Motor_SetMode(Motor_TypeDef *motor, MotorControlMode_TypeDef mode);
 /* 设置目标值 */
 void Motor_SetTorque(Motor_TypeDef *motor, float target_iq);        // 力矩模式
 void Motor_SetVelocity(Motor_TypeDef *motor, float target_velocity);// 速度模式
-void Motor_SetPosition(Motor_TypeDef *motor, float target_position);// 位置模式（预留）
+void Motor_SetPosition(Motor_TypeDef *motor, float target_position);// 位置模式
 
 /* ==================== 电机更新函数 ==================== */
 void Motor_UpdateSensors(Motor_TypeDef *motor);       // 更新传感器数据

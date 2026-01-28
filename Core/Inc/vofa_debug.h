@@ -11,7 +11,7 @@
 #include <string.h>
 
 /* VOFA+ JustFloat协议配置 */
-#define VOFA_CHANNEL_NUM    8       // 最多8个通道（可根据需要调整）
+#define VOFA_CHANNEL_NUM    8       // 最多8个通道（可调整）
 #define VOFA_TAIL_SIZE      4       // 帧尾大小
 #define VOFA_FRAME_SIZE     (VOFA_CHANNEL_NUM * 4 + VOFA_TAIL_SIZE)  // 总帧大小
 

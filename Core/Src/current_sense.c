@@ -73,28 +73,28 @@ void CurrentSense_Stop(CurrentSense_TypeDef *cs)
 void CurrentSense_Calibrate(CurrentSense_TypeDef *cs, uint32_t sample_count)
 {
     uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
+    uint16_t temp_buffer[CURRENT_BUFFER_SIZE];
+
+    // 使用DMA采样模式进行校准
+    // 启动DMA采样
+    HAL_ADC_Start_DMA(cs->hadc, (uint32_t*)temp_buffer, CURRENT_BUFFER_SIZE);
+
+    // 丢弃前几次采样，让ADC和电路稳定
+    HAL_Delay(50);
 
     for (uint32_t i = 0; i < sample_count; i++)
     {
-        // 启动单次转换
-        HAL_ADC_Start(cs->hadc);
-        HAL_ADC_PollForConversion(cs->hadc, 100);
-        uint32_t adc_a = HAL_ADC_GetValue(cs->hadc);
+        // 等待DMA传输完成（等待一个完整的扫描序列）
+        HAL_Delay(2);  // 给ADC足够的时间完成扫描
 
-        HAL_ADC_PollForConversion(cs->hadc, 100);
-        uint32_t adc_b = HAL_ADC_GetValue(cs->hadc);
-
-        HAL_ADC_PollForConversion(cs->hadc, 100);
-        uint32_t adc_c = HAL_ADC_GetValue(cs->hadc);
-
-        HAL_ADC_Stop(cs->hadc);
-
-        sum_a += adc_a;
-        sum_b += adc_b;
-        sum_c += adc_c;
-
-        HAL_Delay(1);
+        // 从缓冲区读取ADC值（扫描顺序：Channel 15, Channel 3, Channel 8）
+        sum_a += temp_buffer[0];  // A相
+        sum_b += temp_buffer[1];  // B相
+        sum_c += temp_buffer[2];  // C相
     }
+
+    // 停止DMA采样
+    HAL_ADC_Stop_DMA(cs->hadc);
 
     // 计算平均值作为零点偏移
     cs->offset_a = (uint16_t)(sum_a / sample_count);

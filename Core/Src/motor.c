@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 /* ==================== 电机初始化函数实现 ==================== */
-
 /**
  * @brief  初始化电机对象
  * @param  motor: 电机对象指针
@@ -199,7 +198,8 @@ void Motor_UpdateSensors(Motor_TypeDef *motor)
  * @brief  更新电流环
  * @param  motor: 电机对象指针
  * @retval None
- * @note   应在高频中断中调用（如20kHz），在UpdateSensors之后调用
+ * @note
+
  */
 void Motor_UpdateCurrentLoop(Motor_TypeDef *motor)
 {
@@ -240,7 +240,7 @@ void Motor_UpdateCurrentLoop(Motor_TypeDef *motor)
  * @brief  更新速度环
  * @param  motor: 电机对象指针
  * @retval None
- * @note   应在低频定时器中调用（如1kHz）
+ * @note
  */
 void Motor_UpdateVelocityLoop(Motor_TypeDef *motor)
 {

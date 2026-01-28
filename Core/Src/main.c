@@ -72,13 +72,18 @@ void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN 0 */
 FOC_TypeDef foc;
 Motor_TypeDef motor1;
-CurrentSense_TypeDef current_sense;
+#if defined(__CC_ARM) || defined(__ARMCC_VERSION)  /* Keil MDK */
+__attribute__((section(".ARM.__at_0x30020000"))) CurrentSense_TypeDef current_sense;
+#elif defined(__GNUC__)  /* GCC / CubeIDE */
+__attribute__((section(".RAM_D2"))) CurrentSense_TypeDef current_sense;
+#endif
+
 
 /* ==================== 开环速度测试相关变量 ==================== */
 float open_loop_angle = 0.0f;       // 开环电角度
-float open_loop_velocity = 1500.0f;  // 开环速度（rad/s）最大920
-float open_loop_voltage = 30.0f;    // 开环电压（V）
-uint8_t open_loop_enabled = 1;      // 开环使能标志
+float open_loop_velocity = 600.0f;  // 开环速度（rad/s）最大920
+float open_loop_voltage = 15.0f;    // 开环电压（V）
+uint8_t open_loop_enabled = 0;      // 开环使能标志
 /* USER CODE END 0 */
 
 /**
@@ -141,7 +146,8 @@ int main(void)
   /* 启动TIM1定时器*/
   HAL_TIM_Base_Start(&htim1);
 
-  HAL_TIM_OC_Start(&htim1, TIM_CHANNEL_4);
+  FOC_Enable(&foc);
+  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
 
   /* ===== 初始化编码器 ===== */
   Encoder_Init(&encoder_M0, &htim3);  // 使用TIM3作为编码器接口
@@ -149,12 +155,10 @@ int main(void)
 
   /* ===== 初始化电流传感器 ===== */
   CurrentSense_Init(&current_sense, &hadc2);
-  /*校准ADC*/
-  HAL_ADCEx_Calibration_Start (&hadc2, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
-  CurrentSense_Calibrate(&current_sense, 5);  
 
-  /* 启动ADC1 DMA采样（循环模式） */
-  //HAL_ADC_Start_DMA(&hadc2, (uint32_t*)current_sense.adc_buffer, CURRENT_BUFFER_SIZE * 2);
+  CurrentSense_Calibrate(&current_sense, 200);
+
+  HAL_ADC_Start_DMA(&hadc2, (uint32_t*)current_sense.adc_buffer, CURRENT_BUFFER_SIZE * 2);
 
   /* ===== 初始化FOC控制器 ===== */
   FOC_Init(&foc, 11, 24.0f);  // 11极对数，24V供电（根据你的电机参数修改）
@@ -384,19 +388,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* ===== VOFA+数据发送===== */
         static uint16_t vofa_count = 0;
         vofa_count++;
-        if (vofa_count >= 10000) {  
+        if (vofa_count >= 1000) {  
             vofa_count = 0;
             /* 获取当前数据 */
             float encoder_angle = Encoder_GetAngle_Mech_Deg(&encoder_M0); // 机械角度(度)
             float encoder_speed = Encoder_GetSpeed_RPS(&encoder_M0);  // 编码器速度(RPS)
             float current_ia, current_ib, current_ic;
             CurrentSense_GetCurrents(&current_sense, &current_ia, &current_ib, &current_ic);
-            static uint8_t buffer[100];
-            int len =sprintf(buffer,"angle:%.1f,speed:%.1f,ia:%.1f,ib:%.1f,ic%.1f,id:%.1f,iq:%.1f",encoder_angle,encoder_speed,
+            
+            static char buffer[100];
+            int len =sprintf(buffer,"angle:%.1f,speed:%.1f,ia:%.5f,ib:%.5f,ic%.5f,id:%.1f,iq:%.1f\r\n",encoder_angle,encoder_speed,
                               current_ia,current_ib,current_ic,foc.i_dq.d,foc.i_dq.q,foc.target_iq);
+
             /* 发送到VOFA+ (8个通道) */
 
-            //HAL_UART_Transmit_DMA(&huart4, (uint8_t*) buffer, strlen(buffer));
+            HAL_UART_Transmit_DMA(&huart4, (uint8_t*) buffer, strlen(buffer));
             /*
             VOFA_SendFloat(
                 encoder_angle,          // CH0: 编码器电角度 (度)

@@ -46,6 +46,11 @@ extern uint8_t rx_buf[];                // 串口接收缓冲
 extern uint8_t open_loop_enabled;       // 开环使能标志
 extern float open_loop_velocity;        // 开环速度
 #define RX_BUF_SIZE 16                  // 接收缓冲区大小
+#if defined(__CC_ARM) || defined(__ARMCC_VERSION)  /* Keil MDK */
+					__attribute__((section(".ARM.__at_0x30000050"))) char buf;;
+					#elif defined(__GNUC__)  /* GCC / CubeIDE */
+					__attribute__((section(".RAM_D2"))) VOFA_TypeDef vofa;
+					#endif
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -248,7 +253,11 @@ void DMA1_Stream2_IRQHandler(void)
 void DMA1_Stream3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream3_IRQn 0 */
-
+  static uint32_t dma_irq_count = 0;
+  dma_irq_count++;
+  if (dma_irq_count % 1000 == 0) {
+      HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);  // LED2闪烁表示DMA中断工作
+  }
   /* USER CODE END DMA1_Stream3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_adc2);
   /* USER CODE BEGIN DMA1_Stream3_IRQn 1 */
@@ -355,21 +364,17 @@ void TIM7_IRQHandler(void)
  */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
+    static uint32_t callback_count = 0;  // 必须是static，否则每次重置
+    callback_count++;
+
+    // 测试1：每1000次回调闪烁LED，验证回调是否被调用
+    if (callback_count % 1000 == 0) {
+        HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+    }
+
     if (hadc == &hadc2)
     {
-      if (hadc == &hadc2)
-      {
-        static uint16_t test_cnt = 0;
-        if (++test_cnt >= 10000) {  // 每0.5秒打印一次（20kHz / 10000 = 2Hz）
-          test_cnt = 0;
 
-          char buf[100];
-          sprintf(buf, "ADC: %d, %d, %d\r\n",
-                  current_sense.adc_buffer[0],
-                  current_sense.adc_buffer[1],
-                  current_sense.adc_buffer[2]);
-          HAL_UART_Transmit(&huart4, (uint8_t*)buf, strlen(buf), 100);
-        }
         /* 更新电流采样数据 */
         CurrentSense_DMA_CpltCallback(&current_sense);
 
@@ -400,7 +405,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
             PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
         }
     }
-	}
 }
 /**
  * @brief  ADC DMA半完成回调 - FOC不使用此回调
