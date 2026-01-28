@@ -9,7 +9,7 @@
 #include "main.h"
 #include "usart.h"
 #include <string.h>
-
+#include "FOC.h"
 /* VOFA+ JustFloat协议配置 */
 #define VOFA_CHANNEL_NUM    8       // 最多8个通道（可调整）
 #define VOFA_TAIL_SIZE      4       // 帧尾大小

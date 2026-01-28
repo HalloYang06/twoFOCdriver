@@ -21,10 +21,7 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-//uint8_t rx_buf[RX_BUF_SIZE];
-//uint8_t process_buf[RX_BUF_SIZE];
-uint8_t tx_done=0;
-uint8_t tx_buf[TX_BUF_SIZE];
+
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart4;
@@ -186,33 +183,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
-void UART_Data_process(uint8_t *buf,uint8_t len) {
-  if (len<sizeof(Data_frame_t)) return;
-  for (int i=0; i<len; i++) {
-    if (buf[i]==0xAA && buf[i+1]==0x55) {
-      Data_frame_t *package=(Data_frame_t*)buf[i];
-      uint8_t sum=0;
-      uint8_t *check_pointer=(uint8_t*)&package->len;
-      for (uint8_t j=0; j<6; j++) {
-        sum += check_pointer[j];
-      }
-      if (package->crc == sum && package->tail==0x0A) {
-        if (package->cmd ==0x01) {
-          open_loop_velocity=package->data;
-        }
-      }
-    }
-  }
-}
-/*
-void UART_Send(uint8_t *pdata,uint16_t len){
-  if (tx_done==1 && len>0 && len<RX_BUF_SIZE) {
-      tx_done = 0;
-      memcpy(tx_buf,pdata, len);
-      HAL_UART_Transmit_IT(&huart4, tx_buf, len);
-  }
 
 
-}
-*/
 /* USER CODE END 1 */

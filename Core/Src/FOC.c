@@ -212,12 +212,11 @@ void FOC_Init(FOC_TypeDef *foc_ctrl, uint8_t pole_pairs, float voltage_supply)
     foc_ctrl->pole_pairs = pole_pairs;
     foc_ctrl->voltage_supply = voltage_supply;
 
-    // 初始化d轴电流环PID (采样周期假设为50us = 0.00005s)
     // Kp=1.0, Ki=50.0, Kd=0.0
-    PID_Init(&foc_ctrl->pid_id, 1.0f, 50.0f, 0.0f, 0.00005f, FOC_VOLTAGE_LIMIT);
+    PID_Init(&foc_ctrl->pid_id, 1.0f, 50.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);
 
     // 初始化q轴电流环PID
-    PID_Init(&foc_ctrl->pid_iq, 1.0f, 50.0f, 0.0f, 0.00005f, FOC_VOLTAGE_LIMIT);
+    PID_Init(&foc_ctrl->pid_iq, 1.0f, 50.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);
 
     // 初始化速度环PID (采样周期假设为1ms = 0.001s)
     // Kp=0.5, Ki=2.0, Kd=0.01

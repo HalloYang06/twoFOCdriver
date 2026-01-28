@@ -37,6 +37,8 @@ void CurrentSense_Init(CurrentSense_TypeDef *cs, ADC_HandleTypeDef *hadc)
 
     cs->data_ready = 0;
     cs->buffer_index = 0;
+
+
 }
 
 /**

@@ -20,6 +20,7 @@ void Encoder_Init(Encoder_TypeDef *encoder, TIM_HandleTypeDef *htim)
     encoder->speed_rps = 0.0f;
     encoder->zPulseCount = 0;
     encoder->direction = 0;
+    encoder->zero_electric_offset = 0.0f;  // 初始化电角度零点偏移
 }
 
 /**
@@ -249,6 +250,71 @@ float Encoder_GetAngle_Elec_Rad(Encoder_TypeDef *encoder, uint8_t pole_pairs)
     float elec_angle_deg = Encoder_GetAngle_Elec_Deg(encoder, pole_pairs);
     float elec_angle_rad = elec_angle_deg * 0.0174532925f;  // deg * (PI / 180)
 
+    /* 减去零点偏移 */
+    elec_angle_rad -= encoder->zero_electric_offset;
+
+    /* 归一化到 0~2π */
+    while (elec_angle_rad < 0.0f) {
+        elec_angle_rad += 6.28318530718f;  // 加 2π
+    }
+    while (elec_angle_rad >= 6.28318530718f) {
+        elec_angle_rad -= 6.28318530718f;  // 减 2π
+    }
+
     return elec_angle_rad;
+}
+
+/**
+ * @brief  设置电角度零点偏移
+ * @param  encoder: 编码器结构体指针
+ * @param  offset_rad: 零点偏移角度（弧度，0~2π）
+ * @retval None
+ */
+void Encoder_SetElectricZeroOffset(Encoder_TypeDef *encoder, float offset_rad)
+{
+    encoder->zero_electric_offset = offset_rad;
+
+    /* 归一化到 0~2π */
+    while (encoder->zero_electric_offset < 0.0f) {
+        encoder->zero_electric_offset += 6.28318530718f;  // 加 2π
+    }
+    while (encoder->zero_electric_offset >= 6.28318530718f) {
+        encoder->zero_electric_offset -= 6.28318530718f;  // 减 2π
+    }
+}
+
+/**
+ * @brief  获取电角度零点偏移
+ * @param  encoder: 编码器结构体指针
+ * @retval 零点偏移角度（弧度，0~2π）
+ */
+float Encoder_GetElectricZeroOffset(Encoder_TypeDef *encoder)
+{
+    return encoder->zero_electric_offset;
+}
+
+/**
+ * @brief  电角度零点对齐（自动校准）
+ * @note   此函数应在电机静止时调用，会记录当前电角度作为零点
+ * @param  encoder: 编码器结构体指针
+ * @param  pole_pairs: 电机极对数
+ * @retval None
+ */
+void Encoder_AlignElectricZero(Encoder_TypeDef *encoder, uint8_t pole_pairs)
+{
+    /* 读取当前电角度（未校准前的原始值） */
+    float elec_angle_deg = Encoder_GetAngle_Elec_Deg(encoder, pole_pairs);
+    float current_angle_rad = elec_angle_deg * 0.0174532925f;  // 转换为弧度
+
+    /* 将当前角度设置为零点偏移 */
+    encoder->zero_electric_offset = current_angle_rad;
+
+    /* 归一化到 0~2π */
+    while (encoder->zero_electric_offset < 0.0f) {
+        encoder->zero_electric_offset += 6.28318530718f;
+    }
+    while (encoder->zero_electric_offset >= 6.28318530718f) {
+        encoder->zero_electric_offset -= 6.28318530718f;
+    }
 }
 

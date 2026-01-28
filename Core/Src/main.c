@@ -65,7 +65,8 @@ void SystemClock_Config(void);
 static void MPU_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-
+void Forcejiaozhun(float voltage, uint32_t time_ms);//开环校准
+void OpenLoop_SpeedTest(void);//开环测试
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -81,7 +82,7 @@ __attribute__((section(".RAM_D2"))) CurrentSense_TypeDef current_sense;
 
 /* ==================== 开环速度测试相关变量 ==================== */
 float open_loop_angle = 0.0f;       // 开环电角度
-float open_loop_velocity = 600.0f;  // 开环速度（rad/s）最大920
+float open_loop_velocity = 100.0f;  // 开环速度（rad/s）最大920
 float open_loop_voltage = 15.0f;    // 开环电压（V）
 uint8_t open_loop_enabled = 0;      // 开环使能标志
 /* USER CODE END 0 */
@@ -138,36 +139,44 @@ int main(void)
   /* ===== 初始化PWM驱动 ===== */
   PWM_Init();
 
-
-  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0); // U相
-  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0); // V相
-  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0); // W相
-
   /* 启动TIM1定时器*/
   HAL_TIM_Base_Start(&htim1);
 
-  FOC_Enable(&foc);
-  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0);
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);
+  PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);
 
   /* ===== 初始化编码器 ===== */
-  Encoder_Init(&encoder_M0, &htim3);  // 使用TIM3作为编码器接口
+  Encoder_Init(&encoder_M0, &htim3);
   Encoder_Start(&encoder_M0);
 
-  /* ===== 初始化电流传感器 ===== */
+  /* ===== 初始化电流采样 ===== */
   CurrentSense_Init(&current_sense, &hadc2);
-
   CurrentSense_Calibrate(&current_sense, 200);
-
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)current_sense.adc_buffer, CURRENT_BUFFER_SIZE * 2);
 
+  HAL_Delay(100);  // 等待编码器和ADC稳定
+
+  /* ===== 强制对齐电角度零===== */
+  Forcejiaozhun(3.0f, 1500);  // 3V电压，对齐1.5秒
+
   /* ===== 初始化FOC控制器 ===== */
-  FOC_Init(&foc, 11, 24.0f);  // 11极对数，24V供电（根据你的电机参数修改）
+  FOC_Init(&foc, 11, 24.0f);  // 11极对数，24V供电
+
+  PID_Init(&foc.pid_id, 5.0f, 0.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);  // d轴
+  PID_Init(&foc.pid_iq, 0.5f, 5.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);  // q轴
+  PID_SetTarget(&foc.pid_iq, 0.2);  // 降低初始电流到0.2A
 
   /* ===== 初始化VOFA+调试 ===== */
   VOFA_Init(&huart4);
 
-  /* ===== 启动定时器中断 ===== */
-  HAL_TIM_Base_Start_IT(&htim7); // 启动定时器7中断，10kHz
+  /* ===== 启动TIM1 PWM和定时器中断 ===== */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);  // TIM1 CH4触发ADC
+  HAL_TIM_Base_Start_IT(&htim7);  // 启动定时器7中断，1kHz
+
+  /* ===== 启用FOC控制 ===== */
+  FOC_Enable(&foc);
+
 
 
 
@@ -268,6 +277,51 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /**
+ * @brief  开环强制对齐电角度零点
+ * @note   此函数会输出固定d轴电压，强制转子对齐到已知位置
+ * @param  voltage: 对齐电压 (V)
+ * @param  time_ms: 对齐时间 (ms)
+ * @retval None
+ */
+void Forcejiaozhun(float voltage, uint32_t time_ms)
+{
+
+    DQ_TypeDef align_v_dq;
+    align_v_dq.d = voltage;
+    align_v_dq.q = 0.0f;
+
+    /* 2. 设置对齐角度为0（转子会对齐到这个角度） */
+    float jiao_angle = 0.0f;
+
+    /* 3. 反Park变换：dq -> αβ */
+    AlphaBeta_TypeDef align_v_alphabeta;
+    Inverse_Park_Transform(&align_v_dq, jiao_angle, &align_v_alphabeta);
+
+    /* 4. SVPWM调制 */
+    SVPWM_TypeDef svpwm;
+    SVPWM_Calculate(&align_v_alphabeta, 24.0f, &svpwm);
+
+    float duty_a, duty_b, duty_c;
+    SVPWM_GetDutyCycles(&svpwm, &duty_a, &duty_b, &duty_c);
+
+    /* 5. 更新PWM占空比 */
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(duty_a * FOC_PWM_PERIOD));
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(duty_b * FOC_PWM_PERIOD));
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(duty_c * FOC_PWM_PERIOD));
+
+    /* 6. 等待转子物理对齐 */
+    HAL_Delay(time_ms);
+
+    /* 7. 读取编码器位置并设置为零点偏移 */
+    Encoder_AlignElectricZero(&encoder_M0, 11);
+
+    /* 8. 停止PWM输出 */
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0);
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);
+}
+
+/**
  * @brief  开环速度测试 - SVPWM输出
  * @note   在定时器中断中调用，每1ms更新一次
  * @retval None
@@ -363,7 +417,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if (htim == &htim7)
     {
         /* 更新编码器速度 */
-       Encoder_UpdateSpeed(&encoder_M0);
+
       /* 开环速度测试模式 */
         if (open_loop_enabled)
         {
@@ -382,13 +436,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             foc.omega_elec = Encoder_GetSpeed_RPS(&encoder_M0) * 2.0f * PI * foc.pole_pairs;
 
             /* 4. 速度环PID计算（输出q轴电流目标值） */
-            FOC_CalVelocityLoop(&foc);
+            //FOC_CalVelocityLoop(&foc);
         }
 
         /* ===== VOFA+数据发送===== */
         static uint16_t vofa_count = 0;
         vofa_count++;
-        if (vofa_count >= 1000) {  
+        if (vofa_count >= 10) {
             vofa_count = 0;
             /* 获取当前数据 */
             float encoder_angle = Encoder_GetAngle_Mech_Deg(&encoder_M0); // 机械角度(度)
@@ -398,12 +452,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             
             static char buffer[100];
             int len =sprintf(buffer,"angle:%.1f,speed:%.1f,ia:%.5f,ib:%.5f,ic%.5f,id:%.1f,iq:%.1f\r\n",encoder_angle,encoder_speed,
-                              current_ia,current_ib,current_ic,foc.i_dq.d,foc.i_dq.q,foc.target_iq);
+                              current_ia,current_ib,current_ic,foc.i_dq.d,foc.i_dq.q);
 
             /* 发送到VOFA+ (8个通道) */
 
             HAL_UART_Transmit_DMA(&huart4, (uint8_t*) buffer, strlen(buffer));
-            /*
+
             VOFA_SendFloat(
                 encoder_angle,          // CH0: 编码器电角度 (度)
                 encoder_speed,          // CH1: 编码器速度 (RPS)
@@ -414,7 +468,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                 foc.i_dq.q,            // CH6: q轴电流 (A)
                 foc.target_iq          // CH7: 目标q轴电流 (A)
             );
-            */
+
 
         }
     }

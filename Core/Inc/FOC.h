@@ -70,6 +70,7 @@ typedef struct {
     PID_TypeDef pid_id;         // d轴电流环PID
     PID_TypeDef pid_iq;         // q轴电流环PID
     PID_TypeDef pid_velocity;   // 速度环PID
+    PID_TypeDef pid_pos;        //位置环PID
 
     // 电流
     PhaseCurrents_TypeDef i_abc;    // 三相电流
@@ -93,6 +94,7 @@ typedef struct {
     float target_velocity;      // 目标速度 (rad/s)
     float target_id;            // 目标d轴电流 (通常为0)
     float target_iq;            // 目标q轴电流 (由速度环输出)
+    float target_pos;           //目标位置
 
     // 电机参数
     uint8_t pole_pairs;         // 极对数

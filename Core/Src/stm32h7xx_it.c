@@ -377,10 +377,15 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 
         /* 更新电流采样数据 */
         CurrentSense_DMA_CpltCallback(&current_sense);
-
+        /*更新编码器的数据*/
+        Encoder_UpdateSpeed(&encoder_M0);
         /* 仅在FOC使能时执行控制算法 */
         if (foc.enabled)
         {
+            /* 0. 实时更新电角度（必须在Park变换前更新！） */
+            float elec_angle_rad = Encoder_GetAngle_Elec_Rad(&encoder_M0, foc.pole_pairs);
+            foc.theta_elec = elec_angle_rad;  // 直接更新，不用FOC_UpdateAngle避免函数调用开销
+
             /* 1. 获取三相电流 */
             PhaseCurrents_TypeDef i_abc;
             CurrentSense_GetCurrents(&current_sense, &i_abc.Ia, &i_abc.Ib, &i_abc.Ic);
@@ -389,7 +394,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
             FOC_UpdateCurrents(&foc, &i_abc);
 
             /* 3. 电流环PID计算 */
-            FOC_CalCurrentLoop(&foc);
+            FOC_CalCurrentLoop(&foc);//
 
             /* 4. 逆Park变换 (dq -> αβ) */
             Inverse_Park_Transform(&foc.v_dq, foc.theta_elec, &foc.v_alphabeta);

@@ -3,6 +3,8 @@
 //
 
 #include "vofa_debug.h"
+#include "stdio.h"
+#include "string.h"
 #if defined(__CC_ARM) || defined(__ARMCC_VERSION)  /* Keil MDK */
 __attribute__((section(".ARM.__at_0x30000000"))) VOFA_TypeDef vofa;
 #elif defined(__GNUC__)  /* GCC / CubeIDE */
@@ -10,10 +12,10 @@ __attribute__((section(".RAM_D2"))) VOFA_TypeDef vofa;
 #endif
 /* 全局VOFA实例 */
 VOFA_TypeDef vofa;
-
+uint8_t rx_buf[128];
 /* VOFA+ JustFloat协议帧尾：0x00 0x00 0x80 0x7f */
 static const uint8_t vofa_tail[4] = {0x00, 0x00, 0x80, 0x7f};
-
+extern FOC_TypeDef foc;
 /**
  * @brief  初始化VOFA+调试
  * @param  huart: 串口句柄指针
@@ -91,3 +93,32 @@ void VOFA_UART_TxCpltCallback(UART_HandleTypeDef *huart)
         vofa.tx_busy = 0;  /* 发送完成，清除忙标志 */
     }
 }
+/**
+ *@brief 处理串口的命令
+ *格式：【调节的对象】：%占位符\n
+ *@param str:接受的字符串数组
+ *retval None
+ */
+void VOFA_ProcessData(char *str) {
+    float val = 0.0f;
+
+    // 位置环 PID 调节
+    if (sscanf(str, "pos_kp:%f", &val) == 1) foc.pid_pos.Kp = val;
+    else if (sscanf(str, "pos_ki:%f", &val) == 1) foc.pid_pos.Ki = val;
+    else if (sscanf(str, "pos_kd:%f", &val) == 1) foc.pid_pos.Kd = val;
+
+    // 速度环 PID 调节
+    else if (sscanf(str, "vel_kp:%f", &val) == 1) foc.pid_velocity.Kp = val;
+    else if (sscanf(str, "vel_ki:%f", &val) == 1) foc.pid_velocity.Ki = val;
+
+    // 电流环 PID 调节 (最内环)
+    else if (sscanf(str, "iq_kp:%f", &val) == 1) foc.pid_iq.Kp = val;
+    else if (sscanf(str, "iq_ki:%f", &val) == 1) foc.pid_iq.Ki = val;
+
+    // 目标值设定
+    else if (sscanf(str, "target_pos:%f", &val) == 1) foc.target_pos = val;
+    else if (sscanf(str, "target_vel:%f", &val) == 1) foc.target_velocity = val;
+    else if (sscanf(str, "target_iq:%f", &val) == 1) foc.target_iq = val;
+
+}
+

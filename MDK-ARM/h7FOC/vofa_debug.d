@@ -42,3 +42,10 @@ h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
 h7foc\vofa_debug.o: ../Core/Inc/usart.h
 h7foc\vofa_debug.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\string.h
+h7foc\vofa_debug.o: ../Core/Inc/FOC.h
+h7foc\vofa_debug.o: ../Core/Inc/encoder.h
+h7foc\vofa_debug.o: ../Core/Inc/tim.h
+h7foc\vofa_debug.o: ../Core/Inc/current_sense.h
+h7foc\vofa_debug.o: ../Core/Inc/adc.h
+h7foc\vofa_debug.o: ../Core/Inc/pwm_driver.h
+h7foc\vofa_debug.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdio.h
