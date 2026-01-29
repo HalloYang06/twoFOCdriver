@@ -74,8 +74,23 @@ int32_t Encoder_GetTotalCount(Encoder_TypeDef *encoder)
 }
 
 /**
+ * @brief  仅更新编码器累计计数值（高频调用）
+ * @note   此函数应在ADC中断等高频中断中调用，仅更新totalCount
+ * @param  encoder: 编码器结构体指针
+ * @retval None
+ */
+void Encoder_UpdateTotalCount(Encoder_TypeDef *encoder)
+{
+    int16_t currentCount = Encoder_GetCount(encoder);
+    int16_t diff = currentCount - encoder->lastCount;
+
+    encoder->totalCount += diff;
+    encoder->lastCount = currentCount;
+}
+
+/**
  * @brief  更新编码器转速
- * @note   此函数应该在固定的时间间隔内调用（如10ms）
+ * @note   此函数应该在固定的时间间隔内调用（如1ms，与ENCODER_SAMPLE_TIME匹配）
  * @param  encoder: 编码器结构体指针
  * @retval None
  */
@@ -85,7 +100,7 @@ void Encoder_UpdateSpeed(Encoder_TypeDef *encoder)
 
     // 计算本次采样周期内的计数差值
     encoder->deltaCount = currentCount - encoder->lastCount;
-    encoder->totalCount+=encoder->deltaCount;
+    encoder->totalCount += encoder->deltaCount;
     encoder->lastCount = currentCount;
 
     // 判断旋转方向

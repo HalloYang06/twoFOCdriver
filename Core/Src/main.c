@@ -164,7 +164,7 @@ int main(void)
   FOC_Init(&foc, 11, 24.0f);  // 11极对数，24V供电
 
   PID_Init(&foc.pid_id, 5.0f, 0.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);  // d轴
-  PID_Init(&foc.pid_iq, 0.5f, 5.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);  // q轴
+  PID_Init(&foc.pid_iq, 2.0f, 0.0f, 0.0f, 0.0000f, FOC_VOLTAGE_LIMIT);  // q轴
   PID_SetTarget(&foc.pid_iq, 0.2);  // 降低初始电流到0.2A
 
   /* ===== 初始化VOFA+调试 ===== */
@@ -176,19 +176,7 @@ int main(void)
 
   /* ===== 启用FOC控制 ===== */
   FOC_Enable(&foc);
-
-
-
-
-
-  /*
-  const osThreadAttr_t uart_send_task_attributes = {
-    .name = "uart_send_task",
-    .stack_size = 128 * 4,
-    .priority = (osPriority_t) osPriorityNormal,
-  };
-  uart_send_task_handle = osThreadNew(uart_send_task, NULL, &uart_send_task_attributes);
-  */
+	foc.enabled=1;
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -413,10 +401,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   /* ==================== TIM7中断回调 (1kHz) ==================== */
 
- /* TIM7: 1ms周期，用于FOC控制和数据采集 */
+ /* TIM7: 1ms周期，用于速度更新和低频任务 */
     if (htim == &htim7)
     {
-        /* 更新编码器速度 */
+        /* 更新编码器速度（1kHz频率，与ENCODER_SAMPLE_TIME=0.001匹配） */
+        Encoder_UpdateSpeed(&encoder_M0);
 
       /* 开环速度测试模式 */
         if (open_loop_enabled)
@@ -426,16 +415,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* 闭环FOC控制模式 */
         else if (foc.enabled)
         {
-            /* 1. 获取电角度（度数，0~2pi） */
-            float elec_angle_rad = Encoder_GetAngle_Elec_Rad(&encoder_M0, foc.pole_pairs);
+            /* 计算电角速度 (rad/s) */
+            //foc.omega_elec = Encoder_GetSpeed_RPS(&encoder_M0) * 2.0f * PI * foc.pole_pairs;
 
-            /* 2. 更新FOC角度 */
-            FOC_UpdateAngle(&foc, elec_angle_rad);
-
-            /* 3. 计算电角速度 (rad/s) */
-            foc.omega_elec = Encoder_GetSpeed_RPS(&encoder_M0) * 2.0f * PI * foc.pole_pairs;
-
-            /* 4. 速度环PID计算（输出q轴电流目标值） */
+            /* 速度环PID计算（如果启用） */
             //FOC_CalVelocityLoop(&foc);
         }
 
@@ -449,15 +432,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             float encoder_speed = Encoder_GetSpeed_RPS(&encoder_M0);  // 编码器速度(RPS)
             float current_ia, current_ib, current_ic;
             CurrentSense_GetCurrents(&current_sense, &current_ia, &current_ib, &current_ic);
-            
+            /*
             static char buffer[100];
             int len =sprintf(buffer,"angle:%.1f,speed:%.1f,ia:%.5f,ib:%.5f,ic%.5f,id:%.1f,iq:%.1f\r\n",encoder_angle,encoder_speed,
                               current_ia,current_ib,current_ic,foc.i_dq.d,foc.i_dq.q);
-
-            /* 发送到VOFA+ (8个通道) */
-
             HAL_UART_Transmit_DMA(&huart4, (uint8_t*) buffer, strlen(buffer));
-
+            */
+            /* 发送到VOFA+ (8个通道) */
             VOFA_SendFloat(
                 encoder_angle,          // CH0: 编码器电角度 (度)
                 encoder_speed,          // CH1: 编码器速度 (RPS)
@@ -468,8 +449,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                 foc.i_dq.q,            // CH6: q轴电流 (A)
                 foc.target_iq          // CH7: 目标q轴电流 (A)
             );
-
-
         }
     }
   /* USER CODE END Callback 1 */
