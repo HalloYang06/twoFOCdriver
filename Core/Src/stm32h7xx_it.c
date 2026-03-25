@@ -28,6 +28,7 @@
 #include "vofa_debug.h"
 #include "usart.h"
 #include "stdlib.h"
+#include "tamagawa.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,20 +38,19 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-extern Encoder_TypeDef encoder_M2;      // 在main.c中定义
+extern Encoder_TypeDef encoder_M2;      // 在main.c中定�?
 extern Encoder_TypeDef encoder_M0;      // FOC控制的编码器
-extern FOC_TypeDef foc;                 // FOC控制器
+extern Tamagawa_TypeDef tamagawa_M0;    // 多摩川编码器
+extern FOC_TypeDef foc;                 // FOC控制�?
 extern CurrentSense_TypeDef current_sense; // 电流采样
-extern TIM_HandleTypeDef htim1;         // PWM定时器
+extern TIM_HandleTypeDef htim1;         // PWM定时�?
 extern uint8_t rx_buf[];                // 串口接收缓冲
-extern uint8_t open_loop_enabled;       // 开环使能标志
+extern uint8_t open_loop_enabled;       // 开环使能标�?
 extern float open_loop_velocity;        // 开环速度
-#define RX_BUF_SIZE 16                  // 接收缓冲区大小
-#if defined(__CC_ARM) || defined(__ARMCC_VERSION)  /* Keil MDK */
-					__attribute__((section(".ARM.__at_0x30000050"))) char buf;;
-					#elif defined(__GNUC__)  /* GCC / CubeIDE */
-					__attribute__((section(".RAM_D2"))) VOFA_TypeDef vofa;
-					#endif
+#define RX_BUF_SIZE 16                  // 接收缓冲区大�?
+/* Electrical angle offset for quick phase test: 0, +/-1.0472, +/-2.0944, 3.1416 */
+#define FOC_THETA_OFFSET_RAD 0.0f
+#define FOC_THETA_DIR_SIGN   (-1.0f)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -82,7 +82,10 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim7;
 extern DMA_HandleTypeDef hdma_uart4_rx;
 extern DMA_HandleTypeDef hdma_uart4_tx;
+extern DMA_HandleTypeDef hdma_usart2_rx;
+extern DMA_HandleTypeDef hdma_usart2_tx;
 extern UART_HandleTypeDef huart4;
+extern UART_HandleTypeDef huart2;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
@@ -113,15 +116,52 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-  /* 进入 HardFault，LED2 快闪提示 */
+  volatile uint32_t cfsr = SCB->CFSR;
+  volatile uint32_t hfsr = SCB->HFSR;
+  volatile uint32_t bfar = SCB->BFAR;
+
+  volatile uint32_t *stack_ptr;
+#if defined(__CC_ARM) || defined(__ARMCC_VERSION)
+  /* Keil ARMCC/ARMClang */
+  register uint32_t lr_val __asm("lr");
+  if (lr_val & 0x04)
+    stack_ptr = (volatile uint32_t *)__get_PSP();
+  else
+    stack_ptr = (volatile uint32_t *)__get_MSP();
+#else
+  /* GCC */
+  __asm volatile (
+    "TST LR, #4 \n"
+    "ITE EQ \n"
+    "MRSEQ %0, MSP \n"
+    "MRSNE %0, PSP \n"
+    : "=r" (stack_ptr)
+  );
+#endif
+
+  volatile uint32_t fault_lr  = stack_ptr[5];
+  volatile uint32_t fault_pc  = stack_ptr[6];
+
+  char buf[128];
+  int len = snprintf(buf, sizeof(buf),
+    "\r\n!!! HardFault !!!\r\n"
+    "PC=0x%08lX LR=0x%08lX\r\n"
+    "CFSR=0x%08lX HFSR=0x%08lX BFAR=0x%08lX\r\n",
+    fault_pc, fault_lr, cfsr, hfsr, bfar);
+
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-    for(volatile uint32_t i = 0; i < 500000; i++);
-    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-    for(volatile uint32_t i = 0; i < 500000; i++);
+    /* 每次循环都发送故障信�?*/
+    for (int i = 0; i < len; i++)
+    {
+      while (!(UART4->ISR & USART_ISR_TXE_TXFNF)) {}
+      UART4->TDR = (uint8_t)buf[i];
+    }
+    while (!(UART4->ISR & USART_ISR_TC)) {}
+
+
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
@@ -253,16 +293,40 @@ void DMA1_Stream2_IRQHandler(void)
 void DMA1_Stream3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream3_IRQn 0 */
-  static uint32_t dma_irq_count = 0;
-  dma_irq_count++;
-  if (dma_irq_count % 1000 == 0) {
-      HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);  // LED2闪烁表示DMA中断工作
-  }
+	
   /* USER CODE END DMA1_Stream3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_adc2);
   /* USER CODE BEGIN DMA1_Stream3_IRQn 1 */
 
   /* USER CODE END DMA1_Stream3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream4 global interrupt.
+  */
+void DMA1_Stream4_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream4_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_rx);
+  /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream5 global interrupt.
+  */
+void DMA1_Stream5_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_tx);
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream5_IRQn 1 */
 }
 
 /**
@@ -306,6 +370,20 @@ void TIM3_IRQHandler(void)
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
   /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART2 global interrupt.
+  */
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+  /* USER CODE END USART2_IRQn 1 */
 }
 
 /**
@@ -353,58 +431,75 @@ void TIM7_IRQHandler(void)
   /* USER CODE END TIM7_IRQn 1 */
 }
 
+/**
+  * @brief This function handles DMAMUX1 overrun interrupt.
+  */
+void DMAMUX1_OVR_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMAMUX1_OVR_IRQn 0 */
+
+  /* USER CODE END DMAMUX1_OVR_IRQn 0 */
+  // Handle DMA1_Stream4
+  HAL_DMAEx_MUX_IRQHandler(&hdma_usart2_rx);
+  /* USER CODE BEGIN DMAMUX1_OVR_IRQn 1 */
+
+  /* USER CODE END DMAMUX1_OVR_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
-/* ==================== FOC电流环相关回调 (20kHz) ==================== */
+/* ==================== FOC电流环相关回�?(20kHz) ==================== */
 
 /**
- * @brief  ADC转换完成回调 - FOC电流环主循环
- * @note   由TIM1 CH4触发，频率20kHz (50us周期)
+ * @brief  ADC转换完成回调 - FOC电流环主循环 (20kHz)
+ * @note   由TIM1 CH4触发，频�?0kHz (50us周期)
  * @param  hadc: ADC句柄
  * @retval None
  */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    static uint32_t callback_count = 0;  // 必须是static，否则每次重置
+{		
+		/*
+    static uint32_t callback_count = 0;
     callback_count++;
 
-    // 测试1：每1000次回调闪烁LED，验证回调是否被调用
-    if (callback_count % 1000 == 0) {
+    // LED1闪烁指示ADC中断工作（每1秒，20000次）
+    if (callback_count % 20000 == 0) {
         HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
     }
-
+		*/
     if (hadc == &hadc2)
     {
-
-        /* 更新电流采样数据 */
+        /* ===== 步骤1：更新电流采�?===== */
         CurrentSense_DMA_CpltCallback(&current_sense);
-        /*更新编码器的数据*/
-        Encoder_UpdateSpeed(&encoder_M0);
-        /* 仅在FOC使能时执行控制算法 */
+        /* 注意：Tamagawa_Update 已移�?TIM7 1kHz 中断�?
+         * 不能�?0kHz ADC中断里调用HAL_UART_Transmit_DMA�?
+         * 会打断UART回调导致HAL状态机破坏 -> HardFault */
+
+        /* ===== 步骤2：仅在FOC使能时执行控�?===== */
         if (foc.enabled)
         {
-            /* 0. 实时更新电角度（必须在Park变换前更新！） */
-            float elec_angle_rad = Encoder_GetAngle_Elec_Rad(&encoder_M0, foc.pole_pairs);
-            foc.theta_elec = elec_angle_rad;  // 直接更新，不用FOC_UpdateAngle避免函数调用开销
+            /* 2.1 在电流环中直接从position计算电角度 */
+            {
+                foc.theta_elec = _normalizeAngle(
+                    FOC_THETA_DIR_SIGN * tamagawa_M0.angle_elec_rad + FOC_THETA_OFFSET_RAD
+                );
+            }
 
-            /* 1. 获取三相电流 */
+            /* 2.2 获取三相电流 */
             PhaseCurrents_TypeDef i_abc;
             CurrentSense_GetCurrents(&current_sense, &i_abc.Ia, &i_abc.Ib, &i_abc.Ic);
 
-            /* 2. 更新FOC电流（Clarke + Park变换） */
+            /* 2.3 FOC变换和PID计算 */
             FOC_UpdateCurrents(&foc, &i_abc);
+            FOC_CalCurrentLoop(&foc);
 
-            /* 3. 电流环PID计算 */
-            FOC_CalCurrentLoop(&foc);//
-
-            /* 4. 逆Park变换 (dq -> αβ) */
+            /* 2.4 逆Park + SVPWM */
             Inverse_Park_Transform(&foc.v_dq, foc.theta_elec, &foc.v_alphabeta);
 
-            /* 5. SVPWM调制 */
             SVPWM_TypeDef svpwm;
             SVPWM_Calculate(&foc.v_alphabeta, foc.voltage_supply, &svpwm);
             SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
 
-            /* 6. 更新PWM占空比 */
+            /* 2.5 更新PWM */
             PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
             PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
             PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
@@ -412,22 +507,20 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     }
 }
 /**
- * @brief  ADC DMA半完成回调 - FOC不使用此回调
- * @note   如果使用双缓冲模式，可以在这里处理前半部分数据
+ * @brief  ADC DMA半完成回�?- FOC不使用此回调
+ * @note   如果使用双缓冲模式，可以在这里处理前半部分数�?
  * @param  hadc: ADC句柄
  * @retval None
  */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
-
-
-        /* FOC电流环不使用半完成回调 */
-        /* 如果需要双缓冲，可以在这里处理 */
+    if (hadc == &hadc2)
+    {
         CurrentSense_DMA_HalfCpltCallback(&current_sense);
-    
+    }
 }
 
-/* ==================== 编码器相关回调 ==================== */
+/* ==================== 编码器相关回�?==================== */
 /**
   * @brief  GPIO外部中断回调函数
   * @param  GPIO_Pin: 触发中断的GPIO引脚
@@ -435,7 +528,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
   */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    // M2编码器Z相中断
+    // M2编码器Z相中�?
 
     if (GPIO_Pin == M2_ENC_Z_Pin)
     {
@@ -445,7 +538,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 /**
- *@ UART发送终端回调函数
+ *@ UART发送终端回调函�?
  * @param  huart: UART句柄
  * @retval None
  */
@@ -453,8 +546,31 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == UART4) {
       // tx_done = 1;  // 修复：应该是赋值，不是比较
 
-      /* VOFA+ DMA发送完成回调 */
+      /* VOFA+ DMA发送完成回�?*/
       VOFA_UART_TxCpltCallback(huart);
+  }
+  /* 多摩川编码器：发送完成后切换到接收模�?*/
+  if (huart->Instance == USART2) {
+      Tamagawa_UART_TxCpltCallback_Handler(&tamagawa_M0);
+  }
+}
+
+/**
+ * @brief  UART接收完成回调（DMA满）
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  /* 多摩川编码器：ReceiveToIdle DMA满时也会触发 */
+  if (huart->Instance == USART2) {
+      Tamagawa_UART_RxCpltCallback(&tamagawa_M0);
+  }
+}
+
+/**
+ * @brief  UART ReceiveToIdle回调（IDLE检测，多摩川主要用这个�?
+ */
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+  if (huart->Instance == USART2) {
+      Tamagawa_UART_RxEventCallback(&tamagawa_M0, Size);
   }
 }
 

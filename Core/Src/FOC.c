@@ -1,7 +1,7 @@
 #include "FOC.h"
 #include <string.h>
 #include "arm_math.h"
-/* 注意: 全局FOC实例已移除，FOC控制器现在作为Motor对象的成员 */
+
 
 /* ==================== PID控制器函数实现 ==================== */
 
@@ -108,7 +108,7 @@ static inline void Clarke_Transform(PhaseCurrents_TypeDef *i_abc, AlphaBeta_Type
 static inline void Park_Transform(AlphaBeta_TypeDef *i_alphabeta, float theta_rad, DQ_TypeDef *i_dq)
 {
     float32_t cos_value, sin_value;
-    arm_sin_cos_f32(theta_rad * 57.2987f, &sin_value, &cos_value);  // 弧度转度数
+    arm_sin_cos_f32(theta_rad * 57.29577951f, &sin_value, &cos_value);
 
     i_dq->d = i_alphabeta->alpha * cos_value + i_alphabeta->beta * sin_value;
     i_dq->q = -i_alphabeta->alpha * sin_value + i_alphabeta->beta * cos_value;
@@ -124,7 +124,7 @@ static inline void Park_Transform(AlphaBeta_TypeDef *i_alphabeta, float theta_ra
 void Inverse_Park_Transform(DQ_TypeDef *v_dq, float theta_rad, AlphaBeta_TypeDef *v_alphabeta)
 {
     float32_t cos_value, sin_value;
-    arm_sin_cos_f32(theta_rad * 57.2987f, &sin_value, &cos_value);  // 弧度转度数
+    arm_sin_cos_f32(theta_rad * 57.29577951f, &sin_value, &cos_value);
 
     v_alphabeta->alpha = v_dq->d * cos_value - v_dq->q * sin_value;
     v_alphabeta->beta = v_dq->d * sin_value + v_dq->q * cos_value;
@@ -170,7 +170,7 @@ void SVPWM_Calculate(AlphaBeta_TypeDef *v_alphabeta, float v_dc, SVPWM_TypeDef *
 void SPWM_Calculate(FOC_TypeDef *foc,AlphaBeta_TypeDef *v_alphabeta, float vdc) {
     float v_a=v_alphabeta->alpha;
     float v_b=-0.5f*v_alphabeta->alpha+0.8660254f*v_alphabeta->beta;
-    float v_c=-0.8660254*v_alphabeta->alpha-0.5f*v_alphabeta->beta;
+    float v_c=-0.5f*v_alphabeta->alpha-0.8660254f*v_alphabeta->beta;
     foc->duty_c = v_c / vdc+0.5f;
     foc->duty_a = v_a / vdc+0.5f;
     foc->duty_b = v_b / vdc+0.5f;
@@ -212,11 +212,12 @@ void FOC_Init(FOC_TypeDef *foc_ctrl, uint8_t pole_pairs, float voltage_supply)
     foc_ctrl->pole_pairs = pole_pairs;
     foc_ctrl->voltage_supply = voltage_supply;
 
+    // 初始化d轴电流环PID (采样周期假设为50us = 0.00005s)
     // Kp=1.0, Ki=50.0, Kd=0.0
-    PID_Init(&foc_ctrl->pid_id, 1.0f, 50.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);
+    PID_Init(&foc_ctrl->pid_id, 1.0f, 50.0f, 0.0f, 0.00005f, FOC_VOLTAGE_LIMIT);
 
     // 初始化q轴电流环PID
-    PID_Init(&foc_ctrl->pid_iq, 1.0f, 50.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);
+    PID_Init(&foc_ctrl->pid_iq, 1.0f, 50.0f, 0.0f, 0.00005f, FOC_VOLTAGE_LIMIT);
 
     // 初始化速度环PID (采样周期假设为1ms = 0.001s)
     // Kp=0.5, Ki=2.0, Kd=0.01
