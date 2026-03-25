@@ -241,6 +241,7 @@ void Tamagawa_RxParse(Tamagawa_TypeDef *tama, uint8_t *buf)
 void Tamagawa_Update(Tamagawa_TypeDef *tama)
 {
     static uint32_t wait_count = 0;
+    int32_t delta_pos = 0;
 
     if (tama->rx_flag == 0)
     {
@@ -254,7 +255,29 @@ void Tamagawa_Update(Tamagawa_TypeDef *tama)
         wait_count = 0;
         tama->position_last = tama->position_total;
 
-        tama->position_total = tama->position + (int32_t)tama->turns * TAMA_ENCODER_RESOLUTION;
+        /* Unwrap single-turn position from ID0 frames.
+         * We avoid relying on 'turns' because ID0 does not carry ABM.
+         */
+        if (tama->position_raw_valid == 0U)
+        {
+            tama->position_total = tama->position;
+            tama->position_raw_last = tama->position;
+            tama->position_raw_valid = 1U;
+        }
+        else
+        {
+            delta_pos = tama->position - tama->position_raw_last;
+            if (delta_pos > (TAMA_ENCODER_RESOLUTION / 2))
+            {
+                delta_pos -= TAMA_ENCODER_RESOLUTION;
+            }
+            else if (delta_pos < -(TAMA_ENCODER_RESOLUTION / 2))
+            {
+                delta_pos += TAMA_ENCODER_RESOLUTION;
+            }
+            tama->position_total += delta_pos;
+            tama->position_raw_last = tama->position;
+        }
 
         tama->angle_mech_rad = ((float)tama->position / TAMA_ENCODER_RESOLUTION_F) * TWO_PI_F;
 
@@ -265,6 +288,7 @@ void Tamagawa_Update(Tamagawa_TypeDef *tama)
         while (elec_angle < 0.0f) elec_angle += TWO_PI_F;
 
         tama->angle_elec_rad = elec_angle;
+        tama->angle_update_seq++;
 
         tama->rx_flag = 0;
     }
@@ -309,6 +333,11 @@ float Tamagawa_GetAngle_Mech_Rad(Tamagawa_TypeDef *tama)
 
 void Tamagawa_UpdateSpeed(Tamagawa_TypeDef *tama, float dt)
 {
+    if (dt <= 0.0f)
+    {
+        return;
+    }
+
     int32_t delta = tama->position_total - tama->position_total_last;
     tama->position_total_last = tama->position_total;
 

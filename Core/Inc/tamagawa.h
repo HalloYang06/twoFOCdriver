@@ -87,11 +87,14 @@ typedef struct {
     float    angle_elec_rad;        /* 电角度 (rad), [0, 2π) */
     float    elec_zero_offset;      /* 电角度零点偏移 (rad) */
     uint8_t  pole_pairs;            /* 极对数 */
+    uint32_t angle_update_seq;      /* 每次角度更新后自增 */
 
     /* 速度计算 */
     int32_t  position_last;         /* 上次位置 (用于速度计算) */
     int32_t  position_total;        /* 累计位置 (含多圈) */
     int32_t  position_total_last;   /* 上次累计位置 */
+    int32_t  position_raw_last;     /* 上次单圈原始位置 */
+    uint8_t  position_raw_valid;    /* 单圈位置是否已初始化 */
     float    speed_rps;             /* 转速 (转/秒) */
     float    speed_rpm;             /* 转速 (RPM) */
 } Tamagawa_TypeDef;

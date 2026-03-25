@@ -51,6 +51,7 @@ extern float open_loop_velocity;        // 开环速度
 /* Electrical angle offset for quick phase test: 0, +/-1.0472, +/-2.0944, 3.1416 */
 #define FOC_THETA_OFFSET_RAD 0.0f
 #define FOC_THETA_DIR_SIGN   (-1.0f)
+#define FOC_THETA_PREDICT_DT 0.0001f
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -477,11 +478,29 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
         /* ===== 步骤2：仅在FOC使能时执行控�?===== */
         if (foc.enabled)
         {
+            static float omega_elec_lpf = 0.0f;
+            float omega_elec_raw = Tamagawa_GetSpeed_RPS(&tamagawa_M0) * TWO_PI * (float)foc.pole_pairs;
+            omega_elec_lpf += 0.2f * (omega_elec_raw - omega_elec_lpf);
+            foc.omega_elec = omega_elec_lpf;
             /* 2.1 在电流环中直接从position计算电角度 */
             {
-                foc.theta_elec = _normalizeAngle(
+                static uint32_t angle_seq_last = 0;
+                static float theta_elec_pred = 0.0f;
+                float theta_meas = _normalizeAngle(
                     FOC_THETA_DIR_SIGN * tamagawa_M0.angle_elec_rad + FOC_THETA_OFFSET_RAD
                 );
+                if (tamagawa_M0.angle_update_seq != angle_seq_last)
+                {
+                    angle_seq_last = tamagawa_M0.angle_update_seq;
+                    theta_elec_pred = theta_meas;
+                }
+                else
+                {
+                    theta_elec_pred = _normalizeAngle(
+                        theta_elec_pred + FOC_THETA_DIR_SIGN * foc.omega_elec * FOC_THETA_PREDICT_DT
+                    );
+                }
+                foc.theta_elec = theta_elec_pred;
             }
 
             /* 2.2 获取三相电流 */
