@@ -38,20 +38,20 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-extern Encoder_TypeDef encoder_M2;      // 在main.c中定�?
+extern Encoder_TypeDef encoder_M2;      // 在main.c中定�?
 extern Encoder_TypeDef encoder_M0;      // FOC控制的编码器
 extern Tamagawa_TypeDef tamagawa_M0;    // 多摩川编码器
-extern FOC_TypeDef foc;                 // FOC控制�?
+extern FOC_TypeDef foc;                 // FOC控制�?
 extern CurrentSense_TypeDef current_sense; // 电流采样
-extern TIM_HandleTypeDef htim1;         // PWM定时�?
+extern TIM_HandleTypeDef htim1;         // PWM定时�?
 extern uint8_t rx_buf[];                // 串口接收缓冲
-extern uint8_t open_loop_enabled;       // 开环使能标�?
+extern uint8_t open_loop_enabled;       // 开环使能标�?
 extern float open_loop_velocity;        // 开环速度
-#define RX_BUF_SIZE 16                  // 接收缓冲区大�?
+#define RX_BUF_SIZE 16                  // 接收缓冲区大�?
 /* Electrical angle offset for quick phase test: 0, +/-1.0472, +/-2.0944, 3.1416 */
 #define FOC_THETA_OFFSET_RAD 0.0f
 #define FOC_THETA_DIR_SIGN   (-1.0f)
-#define FOC_THETA_PREDICT_DT 0.0001f
+#define FOC_THETA_PREDICT_DT 0.00005f
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,6 +71,50 @@ extern float open_loop_velocity;        // 开环速度
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static inline void FOC_CurrentLoopStep(void)
+{
+    if (!foc.enabled) {
+        return;
+    }
+
+    static float omega_elec_lpf = 0.0f;
+    static uint32_t angle_seq_last = 0;
+    static float theta_elec_pred = 0.0f;
+
+    float omega_elec_raw = Tamagawa_GetSpeed_RPS(&tamagawa_M0) * TWO_PI * (float)foc.pole_pairs;
+    omega_elec_lpf += 0.2f * (omega_elec_raw - omega_elec_lpf);
+    foc.omega_elec = omega_elec_lpf;
+
+    float theta_meas = _normalizeAngle(
+        FOC_THETA_DIR_SIGN * tamagawa_M0.angle_elec_rad + FOC_THETA_OFFSET_RAD
+    );
+
+    if (tamagawa_M0.angle_update_seq != angle_seq_last) {
+        angle_seq_last = tamagawa_M0.angle_update_seq;
+        theta_elec_pred = theta_meas;
+    } else {
+        theta_elec_pred = _normalizeAngle(
+            theta_elec_pred + FOC_THETA_DIR_SIGN * foc.omega_elec * FOC_THETA_PREDICT_DT
+        );
+    }
+    foc.theta_elec = theta_elec_pred;
+
+    PhaseCurrents_TypeDef i_abc;
+    CurrentSense_GetCurrents(&current_sense, &i_abc.Ia, &i_abc.Ib, &i_abc.Ic);
+
+    FOC_UpdateCurrents(&foc, &i_abc);
+    FOC_CalCurrentLoop(&foc);
+
+    Inverse_Park_Transform(&foc.v_dq, foc.theta_elec, &foc.v_alphabeta);
+
+    SVPWM_TypeDef svpwm;
+    SVPWM_Calculate(&foc.v_alphabeta, foc.voltage_supply, &svpwm);
+    SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
+
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
+    PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
+}
 
 /* USER CODE END 0 */
 
@@ -154,7 +198,7 @@ void HardFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* 每次循环都发送故障信�?*/
+    /* 每次循环都发送故障信�?*/
     for (int i = 0; i < len; i++)
     {
       while (!(UART4->ISR & USART_ISR_TXE_TXFNF)) {}
@@ -448,11 +492,11 @@ void DMAMUX1_OVR_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-/* ==================== FOC电流环相关回�?(20kHz) ==================== */
+/* ==================== FOC电流环相关回�?(20kHz) ==================== */
 
 /**
  * @brief  ADC转换完成回调 - FOC电流环主循环 (20kHz)
- * @note   由TIM1 CH4触发，频�?0kHz (50us周期)
+ * @note   由TIM1 CH4触发，频�?0kHz (50us周期)
  * @param  hadc: ADC句柄
  * @retval None
  */
@@ -469,65 +513,19 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 		*/
     if (hadc == &hadc2)
     {
-        /* ===== 步骤1：更新电流采�?===== */
+        /* ===== 步骤1：更新电流采�?===== */
         CurrentSense_DMA_CpltCallback(&current_sense);
-        /* 注意：Tamagawa_Update 已移�?TIM7 1kHz 中断�?
-         * 不能�?0kHz ADC中断里调用HAL_UART_Transmit_DMA�?
+        /* 注意：Tamagawa_Update 已移�?TIM7 1kHz 中断�?
+         * 不能�?0kHz ADC中断里调用HAL_UART_Transmit_DMA�?
          * 会打断UART回调导致HAL状态机破坏 -> HardFault */
 
-        /* ===== 步骤2：仅在FOC使能时执行控�?===== */
-        if (foc.enabled)
-        {
-            static float omega_elec_lpf = 0.0f;
-            float omega_elec_raw = Tamagawa_GetSpeed_RPS(&tamagawa_M0) * TWO_PI * (float)foc.pole_pairs;
-            omega_elec_lpf += 0.2f * (omega_elec_raw - omega_elec_lpf);
-            foc.omega_elec = omega_elec_lpf;
-            /* 2.1 在电流环中直接从position计算电角度 */
-            {
-                static uint32_t angle_seq_last = 0;
-                static float theta_elec_pred = 0.0f;
-                float theta_meas = _normalizeAngle(
-                    FOC_THETA_DIR_SIGN * tamagawa_M0.angle_elec_rad + FOC_THETA_OFFSET_RAD
-                );
-                if (tamagawa_M0.angle_update_seq != angle_seq_last)
-                {
-                    angle_seq_last = tamagawa_M0.angle_update_seq;
-                    theta_elec_pred = theta_meas;
-                }
-                else
-                {
-                    theta_elec_pred = _normalizeAngle(
-                        theta_elec_pred + FOC_THETA_DIR_SIGN * foc.omega_elec * FOC_THETA_PREDICT_DT
-                    );
-                }
-                foc.theta_elec = theta_elec_pred;
-            }
-
-            /* 2.2 获取三相电流 */
-            PhaseCurrents_TypeDef i_abc;
-            CurrentSense_GetCurrents(&current_sense, &i_abc.Ia, &i_abc.Ib, &i_abc.Ic);
-
-            /* 2.3 FOC变换和PID计算 */
-            FOC_UpdateCurrents(&foc, &i_abc);
-            FOC_CalCurrentLoop(&foc);
-
-            /* 2.4 逆Park + SVPWM */
-            Inverse_Park_Transform(&foc.v_dq, foc.theta_elec, &foc.v_alphabeta);
-
-            SVPWM_TypeDef svpwm;
-            SVPWM_Calculate(&foc.v_alphabeta, foc.voltage_supply, &svpwm);
-            SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
-
-            /* 2.5 更新PWM */
-            PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
-            PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
-            PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
-        }
+        /* ===== 步骤2：仅在FOC使能时执行控�?===== */
+        FOC_CurrentLoopStep();
     }
 }
 /**
- * @brief  ADC DMA半完成回�?- FOC不使用此回调
- * @note   如果使用双缓冲模式，可以在这里处理前半部分数�?
+ * @brief  ADC DMA半完成回�?- FOC不使用此回调
+ * @note   如果使用双缓冲模式，可以在这里处理前半部分数�?
  * @param  hadc: ADC句柄
  * @retval None
  */
@@ -536,10 +534,11 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
     if (hadc == &hadc2)
     {
         CurrentSense_DMA_HalfCpltCallback(&current_sense);
+        FOC_CurrentLoopStep();
     }
 }
 
-/* ==================== 编码器相关回�?==================== */
+/* ==================== 编码器相关回�?==================== */
 /**
   * @brief  GPIO外部中断回调函数
   * @param  GPIO_Pin: 触发中断的GPIO引脚
@@ -547,7 +546,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
   */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    // M2编码器Z相中�?
+    // M2编码器Z相中�?
 
     if (GPIO_Pin == M2_ENC_Z_Pin)
     {
@@ -557,7 +556,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 /**
- *@ UART发送终端回调函�?
+ *@ UART发送终端回调函�?
  * @param  huart: UART句柄
  * @retval None
  */
@@ -565,10 +564,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == UART4) {
       // tx_done = 1;  // 修复：应该是赋值，不是比较
 
-      /* VOFA+ DMA发送完成回�?*/
+      /* VOFA+ DMA发送完成回�?*/
       VOFA_UART_TxCpltCallback(huart);
   }
-  /* 多摩川编码器：发送完成后切换到接收模�?*/
+  /* 多摩川编码器：发送完成后切换到接收模�?*/
   if (huart->Instance == USART2) {
       Tamagawa_UART_TxCpltCallback_Handler(&tamagawa_M0);
   }
@@ -585,7 +584,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 /**
- * @brief  UART ReceiveToIdle回调（IDLE检测，多摩川主要用这个�?
+ * @brief  UART ReceiveToIdle回调（IDLE检测，多摩川主要用这个�?
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart->Instance == USART2) {

@@ -37,11 +37,13 @@
 #include <string.h>
 #include "arm_math.h"
 #include "vofa_debug.h"
+#include "tamagawa.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 Encoder_TypeDef encoder_M0, encoder_M1, encoder_M2;
+Tamagawa_TypeDef tamagawa_M0;  /* 澶氭懇宸濈紪鐮佸�?Motor0 */
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -65,8 +67,9 @@ void SystemClock_Config(void);
 static void MPU_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-void Forcejiaozhun(float voltage, uint32_t time_ms);//开环校准
-void OpenLoop_SpeedTest(void);//开环测试
+void Forcejiaozhun(float voltage, uint32_t time_ms);//寮€鐜牎鍑?
+void OpenLoop_SpeedTest(void);//寮€鐜祴璇?
+void Tamagawa_ReadBlocking(Tamagawa_TypeDef *tama); // 阻塞式读取多摩川(初始化用)
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -79,12 +82,14 @@ __attribute__((section(".ARM.__at_0x30020000"))) CurrentSense_TypeDef current_se
 __attribute__((section(".RAM_D2"))) CurrentSense_TypeDef current_sense;
 #endif
 
+volatile uint32_t g_trace = 0;
+
 
 /* ==================== 开环速度测试相关变量 ==================== */
 float open_loop_angle = 0.0f;       // 开环电角度
-float open_loop_velocity = 100.0f;  // 开环速度（rad/s）最大920
-float open_loop_voltage = 15.0f;    // 开环电压（V）
-uint8_t open_loop_enabled = 0;      // 开环使能标志
+float open_loop_velocity = 100.0f;  // 寮€鐜€熷害锛坮ad/s锛夋渶澶?20
+float open_loop_voltage = 10.0f;    // 寮€鐜數鍘嬶紙V�?
+uint8_t open_loop_enabled = 0;      // 寮€鐜娇鑳芥爣�?
 /* USER CODE END 0 */
 
 /**
@@ -100,7 +105,7 @@ int main(void)
   SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
 
 
-  /* 配置FPU在中断中的自动保存（避免中断中使用浮点时HardFault） */
+  /* 閰嶇疆FPU鍦ㄤ腑鏂腑鐨勮嚜鍔ㄤ繚瀛橈紙閬垮厤涓柇涓娇鐢ㄦ诞鐐规椂HardFault�?*/
   __DSB();  // 数据同步屏障
   __ISB();  // 指令同步屏障
   /* USER CODE END 1 */
@@ -135,58 +140,80 @@ int main(void)
   MX_TIM7_Init();
   MX_TIM15_Init();
   MX_TIM3_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   /* ===== 初始化PWM驱动 ===== */
   PWM_Init();
-
-  /* 启动TIM1定时器*/
+  /* ===== 初始化VOFA+调试 ===== */
+  VOFA_Init(&huart4);
+  /* 鍚姩TIM1瀹氭椂鍣?/
   HAL_TIM_Base_Start(&htim1);
 
   PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0);
   PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, 0);
   PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, 0);
 
-  /* ===== 初始化编码器 ===== */
-  Encoder_Init(&encoder_M0, &htim3);
-  Encoder_Start(&encoder_M0);
+  /* ===== 初始化编码器(ABZ保留，可用于其他电机) ===== */
+  //Encoder_Init(&encoder_M0, &htim3);
+  //Encoder_Start(&encoder_M0);
 
-  /* ===== 初始化电流采样 ===== */
+  /* ===== 鍒濆鍖栧鎽╁窛缂栫爜�?(Motor0鐢ㄥ鎽╁窛) ===== */
+  Tamagawa_Init(&tamagawa_M0, &huart2, MOTOR_POLE_PAIRS);
+
+  /* 闃诲寮忚鍙栦竴娆″鎽╁窛鏁版嵁锛岀‘淇濆垵濮嬩綅缃湁�?*/
+  /* 如果通信失败会超时跳过，不阻塞后续初始化 */
+  Tamagawa_ReadBlocking(&tamagawa_M0);
+
+  /* LED1浜〃绀哄鎽╁窛鍒濆鍖栧畬鎴?涓嶇鎴愬姛澶辫�? */
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+  /* ===== 鍒濆鍖栫數娴侀噰鏍?===== */
   CurrentSense_Init(&current_sense, &hadc2);
-  CurrentSense_Calibrate(&current_sense, 200);
+
+  HAL_Delay(100);  // 等待ADC稳定
+
+  
+  //Forcejiaozhun(3.0f, 1500);  // 3V鐢靛帇锛屽�?.5�?
+
+  /* LED1鐏〃绀哄榻愬畬鎴?*/
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+
+  HAL_Delay(100);  // 等待电机完全停止
+
+  /* Start TIM1 CH4 trigger before calibration so ADC2 external trigger is active. */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+  HAL_Delay(5);
+  /* ===== 电流零点校准（在电机静止且不通电时）===== */
+  CurrentSense_Calibrate(&current_sense, 500);
+
+  /* ===== 启动ADC DMA采样 ===== */
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)current_sense.adc_buffer, CURRENT_BUFFER_SIZE * 2);
 
-  HAL_Delay(100);  // 等待编码器和ADC稳定
+  /* ===== 鍒濆鍖朏OC鎺у埗�?===== */
+  FOC_Init(&foc, MOTOR_POLE_PAIRS, 24.0f);
 
-  /* ===== 强制对齐电角度零===== */
-  Forcejiaozhun(3.0f, 1500);  // 3V电压，对齐1.5秒
+ 
+  // 第一步调试：先用纯P控制，不加I和D
+  PID_Init(&foc.pid_id, 1.2f, 60.0f, 0.0f, 0.00005f, FOC_VOLTAGE_LIMIT);   // d�?
+  PID_Init(&foc.pid_iq, 1.2f, 60.0f, 0.0f, 0.00005f, FOC_VOLTAGE_LIMIT);   // q�?
+  PID_SetTarget(&foc.pid_id, 0.0f);      
+  PID_SetTarget(&foc.pid_iq, 0.05f);    
+  /* ===== 先启动所有硬件，最后再使能FOC ===== */
+  HAL_TIM_Base_Start_IT(&htim7);  // 鍚姩瀹氭椂鍣?涓柇锛?kHz
 
-  /* ===== 初始化FOC控制器 ===== */
-  FOC_Init(&foc, 11, 24.0f);  // 11极对数，24V供电
-
-  PID_Init(&foc.pid_id, 5.0f, 0.0f, 0.0f, 0.0001f, FOC_VOLTAGE_LIMIT);  // d轴
-  PID_Init(&foc.pid_iq, 2.0f, 0.0f, 0.0f, 0.0000f, FOC_VOLTAGE_LIMIT);  // q轴
-  PID_SetTarget(&foc.pid_iq, 0.2);  // 降低初始电流到0.2A
-
-  /* ===== 初始化VOFA+调试 ===== */
-  VOFA_Init(&huart4);
-
-  /* ===== 启动TIM1 PWM和定时器中断 ===== */
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);  // TIM1 CH4触发ADC
-  HAL_TIM_Base_Start_IT(&htim7);  // 启动定时器7中断，1kHz
-
-  /* ===== 启用FOC控制 ===== */
+  /* 所有硬件就绪后再使能FOC */
   FOC_Enable(&foc);
-	foc.enabled=1;
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();
+  //osKernelInitialize();
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
+  //MX_FREERTOS_Init();
 
   /* Start scheduler */
-  osKernelStart();
+  //osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -266,7 +293,7 @@ void SystemClock_Config(void)
 
 /**
  * @brief  开环强制对齐电角度零点
- * @note   此函数会输出固定d轴电压，强制转子对齐到已知位置
+ * @note   姝ゅ嚱鏁颁細杈撳嚭鍥哄畾d杞寸數鍘嬶紝寮哄埗杞瓙瀵归綈鍒板凡鐭ヤ綅缃?
  * @param  voltage: 对齐电压 (V)
  * @param  time_ms: 对齐时间 (ms)
  * @retval None
@@ -278,7 +305,7 @@ void Forcejiaozhun(float voltage, uint32_t time_ms)
     align_v_dq.d = voltage;
     align_v_dq.q = 0.0f;
 
-    /* 2. 设置对齐角度为0（转子会对齐到这个角度） */
+    /* 2. 璁剧疆瀵归綈瑙掑害�?锛堣浆瀛愪細瀵归綈鍒拌繖涓搴︼級 */
     float jiao_angle = 0.0f;
 
     /* 3. 反Park变换：dq -> αβ */
@@ -292,7 +319,7 @@ void Forcejiaozhun(float voltage, uint32_t time_ms)
     float duty_a, duty_b, duty_c;
     SVPWM_GetDutyCycles(&svpwm, &duty_a, &duty_b, &duty_c);
 
-    /* 5. 更新PWM占空比 */
+    /* 5. 鏇存柊PWM鍗犵┖姣?*/
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(duty_a * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(duty_b * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(duty_c * FOC_PWM_PERIOD));
@@ -300,8 +327,9 @@ void Forcejiaozhun(float voltage, uint32_t time_ms)
     /* 6. 等待转子物理对齐 */
     HAL_Delay(time_ms);
 
-    /* 7. 读取编码器位置并设置为零点偏移 */
-    Encoder_AlignElectricZero(&encoder_M0, 11);
+    /* 7. 读取多摩川编码器位置并设置为零点偏移 */
+    Tamagawa_ReadBlocking(&tamagawa_M0);
+    Tamagawa_AlignElectricZero(&tamagawa_M0);
 
     /* 8. 停止PWM输出 */
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, 0);
@@ -310,8 +338,68 @@ void Forcejiaozhun(float voltage, uint32_t time_ms)
 }
 
 /**
+ * @brief  闃诲寮忚鍙栧鎽╁窛缂栫爜鍣ㄦ暟鎹紙绾疆璇紝涓嶄緷璧朌MA鍥炶皟锛?
+ * @note   用于初始化阶段测试通信是否正常
+ * @param  tama: 多摩川结构体指针
+ */
+void Tamagawa_ReadBlocking(Tamagawa_TypeDef *tama)
+{
+    uint8_t tx_cmd = TAMA_CMD_ID0;  /* 璇诲崟鍦堬紝鍝嶅�?瀛楄�?*/
+    uint8_t rx_temp[16] = {0};
+    HAL_StatusTypeDef status;
+
+    /* 先中止之前的DMA操作 */
+    HAL_UART_AbortReceive(tama->huart);
+    HAL_UART_AbortTransmit(tama->huart);
+
+    /* 鍒囨崲鍒板彂�?*/
+    for (volatile uint8_t i = 0; i < 50; i++) __NOP();
+    TAMA_RS485_TX();
+    for (volatile uint8_t i = 0; i < 50; i++) __NOP();
+
+    /* 杞鍙戦€?瀛楄�?*/
+    status = HAL_UART_Transmit(tama->huart, &tx_cmd, 1, 100);
+
+    /* 鍒囨崲鍒版帴鏀?*/
+    for (volatile uint8_t i = 0; i < 50; i++) __NOP();
+    TAMA_RS485_RX();
+    for (volatile uint8_t i = 0; i < 50; i++) __NOP();
+
+    if (status != HAL_OK) return;
+
+    /* 杞鎺ユ敹6瀛楄妭锛岃秴�?00ms */
+    status = HAL_UART_Receive(tama->huart, rx_temp, 6, 100);
+
+    if (status == HAL_OK)
+    {
+        /* 解析 */
+        tama->data_id = TAMA_DATA_ID_0;
+        Tamagawa_RxParse(tama, rx_temp);
+
+        tama->position_total = tama->position;
+        tama->angle_mech_rad = ((float)tama->position / TAMA_ENCODER_RESOLUTION_F) * 6.28318530718f;
+
+        float elec_angle = fmodf(tama->angle_mech_rad * (float)tama->pole_pairs, 6.28318530718f);
+        while (elec_angle < 0.0f) elec_angle += 6.28318530718f;
+        while (elec_angle >= 6.28318530718f) elec_angle -= 6.28318530718f;
+        tama->angle_elec_rad = elec_angle;
+    }
+
+    /* 重新启动ReceiveToIdle DMA监听 */
+    memset(tama_rx_buf, 0, TAMA_RX_BUF_SIZE);
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)tama_rx_buf, TAMA_RX_BUF_SIZE);
+    HAL_UARTEx_ReceiveToIdle_DMA(tama->huart, tama_rx_buf, TAMA_RX_BUF_SIZE);
+    if (tama->huart->hdmarx != NULL)
+    {
+        __HAL_DMA_DISABLE_IT(tama->huart->hdmarx, DMA_IT_HT);
+    }
+
+    tama->rx_flag = 0;
+}
+
+/**
  * @brief  开环速度测试 - SVPWM输出
- * @note   在定时器中断中调用，每1ms更新一次
+ * @note   鍦ㄥ畾鏃跺櫒涓柇涓皟鐢紝姣?ms鏇存柊涓€娆?
  * @retval None
  */
 void OpenLoop_SpeedTest(void)
@@ -321,7 +409,7 @@ void OpenLoop_SpeedTest(void)
     }
 
     /* 1. 更新开环电角度（积分） */
-    open_loop_angle += open_loop_velocity * 0.0001f;  // dt = 0.1ms, rad/s转度/s
+    open_loop_angle += open_loop_velocity * 0.001f;  // dt = 0.1ms, rad/s转度/s
 
     /* 2. 归一化角度到 [0, 360°] */
     if (open_loop_angle >=2*PI) {
@@ -331,7 +419,7 @@ void OpenLoop_SpeedTest(void)
         open_loop_angle += 2*PI;
     }
 
-    /* 3. 计算dq轴电压 (开环模式下，id=0, iq产生转矩) */
+    /* 3. 璁＄畻dq杞寸數鍘?(寮€鐜ā寮忎笅锛宨d=0, iq浜х敓杞�? */
     foc.v_dq.d = 0.0f;
     foc.v_dq.q = open_loop_voltage;
 
@@ -342,7 +430,7 @@ void OpenLoop_SpeedTest(void)
     SVPWM_TypeDef svpwm;
     SVPWM_Calculate(&foc.v_alphabeta, 24.0f, &svpwm);
     SVPWM_GetDutyCycles(&svpwm, &foc.duty_a, &foc.duty_b, &foc.duty_c);
-    /* 6. 更新PWM占空比 */
+    /* 6. 鏇存柊PWM鍗犵┖姣?*/
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_1, (uint32_t)(foc.duty_a * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_2, (uint32_t)(foc.duty_b * FOC_PWM_PERIOD));
     PWM_SetDutyCycle(&htim1, TIM_CHANNEL_3, (uint32_t)(foc.duty_c * FOC_PWM_PERIOD));
@@ -401,11 +489,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   /* ==================== TIM7中断回调 (1kHz) ==================== */
 
- /* TIM7: 1ms周期，用于速度更新和低频任务 */
+ /* TIM7: 1ms鍛ㄦ湡锛岀敤浜庨€熷害鏇存柊鍜屼綆棰戜换鍔?*/
     if (htim == &htim7)
     {
-        /* 更新编码器速度（1kHz频率，与ENCODER_SAMPLE_TIME=0.001匹配） */
-        Encoder_UpdateSpeed(&encoder_M0);
+        /* 鍏堥┍鍔ㄥ鎽╁窛閫氫俊鐘舵€佹満锛氬彂閫佽�?鎺ユ敹瑙ｆ�?瓒呮椂鎭㈠ */
+        Tamagawa_Update(&tamagawa_M0);
+
+        /* 更新多摩川编码器速度 (1kHz, dt=0.001s) */
+        Tamagawa_UpdateSpeed(&tamagawa_M0, 0.001f);
+
+        /* 鏇存柊ABZ缂栫爜鍣ㄩ€熷害锛堜繚鐣欏吋瀹癸紝鏈垵濮嬪寲鏃朵笉璋冪敤锛?*/
+        // Encoder_UpdateSpeed(&encoder_M0);
 
       /* 开环速度测试模式 */
         if (open_loop_enabled)
@@ -415,42 +509,38 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* 闭环FOC控制模式 */
         else if (foc.enabled)
         {
-            /* 计算电角速度 (rad/s) */
-            //foc.omega_elec = Encoder_GetSpeed_RPS(&encoder_M0) * 2.0f * PI * foc.pole_pairs;
+            /* 计算电角速度 (rad/s) - 使用多摩川速度 */
+            //foc.omega_elec = Tamagawa_GetSpeed_RPS(&tamagawa_M0) * 2.0f * PI * foc.pole_pairs;
 
             /* 速度环PID计算（如果启用） */
             //FOC_CalVelocityLoop(&foc);
         }
 
-        /* ===== VOFA+数据发送===== */
+        /* ===== VOFA+���ݷ��ͣ�200Hz�����ڶ�λż�������� ===== */
         static uint16_t vofa_count = 0;
         vofa_count++;
-        if (vofa_count >= 10) {
+        if (vofa_count >= 2) {
+            float theta_raw = tamagawa_M0.angle_elec_rad;
+            float theta_ctrl = foc.theta_elec;
+            float i_sum = current_sense.Ia_filtered + current_sense.Ib_filtered + current_sense.Ic_filtered;
+
             vofa_count = 0;
-            /* 获取当前数据 */
-            float encoder_angle = Encoder_GetAngle_Mech_Deg(&encoder_M0); // 机械角度(度)
-            float encoder_speed = Encoder_GetSpeed_RPS(&encoder_M0);  // 编码器速度(RPS)
-            float current_ia, current_ib, current_ic;
-            CurrentSense_GetCurrents(&current_sense, &current_ia, &current_ib, &current_ic);
-            /*
-            static char buffer[100];
-            int len =sprintf(buffer,"angle:%.1f,speed:%.1f,ia:%.5f,ib:%.5f,ic%.5f,id:%.1f,iq:%.1f\r\n",encoder_angle,encoder_speed,
-                              current_ia,current_ib,current_ic,foc.i_dq.d,foc.i_dq.q);
-            HAL_UART_Transmit_DMA(&huart4, (uint8_t*) buffer, strlen(buffer));
-            */
-            /* 发送到VOFA+ (8个通道) */
             VOFA_SendFloat(
-                encoder_angle,          // CH0: 编码器电角度 (度)
-                encoder_speed,          // CH1: 编码器速度 (RPS)
-                current_ia,             // CH2: A相电流 (A)
-                current_ib,             // CH3: B相电流 (A)
-                current_ic,             // CH4: C相电流 (A)
-                foc.i_dq.d,            // CH5: d轴电流 (A)
-                foc.i_dq.q,            // CH6: q轴电流 (A)
-                foc.target_iq          // CH7: 目标q轴电流 (A)
-            );
+                           theta_raw,                       // CH0: ԭʼ��Ƕ�(rad)
+                           theta_ctrl,                      // CH1: ���Ƶ�Ƕ�(rad)
+                           current_sense.Ia_filtered,       // CH2: Ia
+                           current_sense.Ib_filtered,       // CH3: Ib
+                           current_sense.Ic_filtered,       // CH4: Ic
+                           i_sum,                           // CH5: Ia+Ib+Ic��Ӧ�ӽ�0��
+                           foc.i_dq.q,                      // CH6: Iq����
+                           foc.target_iq      							// 
+                );
         }
-    }
+
+
+        
+        }
+
   /* USER CODE END Callback 1 */
 }
 
