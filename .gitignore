@@ -1,3 +1,7 @@
 build
 mx.scratch
 !.settings
+*.iml
+*.o
+*.crf
+*.d

@@ -1,8 +1,8 @@
 h7foc\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/timers.c
-h7foc\timers.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdlib.h
+h7foc\timers.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 h7foc\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
-h7foc\timers.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stddef.h
-h7foc\timers.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdint.h
+h7foc\timers.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+h7foc\timers.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 h7foc\timers.o: ../Core/Inc/FreeRTOSConfig.h
 h7foc\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
 h7foc\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h

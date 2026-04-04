@@ -8,7 +8,7 @@ h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h
 h7foc\vofa_debug.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h
 h7foc\vofa_debug.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h750xx.h
 h7foc\vofa_debug.o: ../Drivers/CMSIS/Include/core_cm7.h
-h7foc\vofa_debug.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdint.h
+h7foc\vofa_debug.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 h7foc\vofa_debug.o: ../Drivers/CMSIS/Include/cmsis_version.h
 h7foc\vofa_debug.o: ../Drivers/CMSIS/Include/cmsis_compiler.h
 h7foc\vofa_debug.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
@@ -16,8 +16,8 @@ h7foc\vofa_debug.o: ../Drivers/CMSIS/Include/mpu_armv7.h
 h7foc\vofa_debug.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
-h7foc\vofa_debug.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stddef.h
-h7foc\vofa_debug.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\math.h
+h7foc\vofa_debug.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+h7foc\vofa_debug.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\math.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc_ex.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio_ex.h
@@ -41,11 +41,4 @@ h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h
 h7foc\vofa_debug.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
 h7foc\vofa_debug.o: ../Core/Inc/usart.h
-h7foc\vofa_debug.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\string.h
-h7foc\vofa_debug.o: ../Core/Inc/FOC.h
-h7foc\vofa_debug.o: ../Core/Inc/encoder.h
-h7foc\vofa_debug.o: ../Core/Inc/tim.h
-h7foc\vofa_debug.o: ../Core/Inc/current_sense.h
-h7foc\vofa_debug.o: ../Core/Inc/adc.h
-h7foc\vofa_debug.o: ../Core/Inc/pwm_driver.h
-h7foc\vofa_debug.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdio.h
+h7foc\vofa_debug.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\string.h

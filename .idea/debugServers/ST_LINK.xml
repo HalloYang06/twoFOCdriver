@@ -4,7 +4,7 @@
       <debugger kind="GDB" isBundled="true" />
       <env />
     </debugger>
-    <gdbserver exe="D:\STM32CubeCLT\STM32CubeCLT_1.18.0\STLink-gdb-server\bin\ST-LINK_gdbserver.exe" programmer="D:\STM32CubeCLT\STM32CubeCLT_1.18.0\STM32CubeProgrammer\bin" />
+    <gdbserver exe="F:/STM32CubeCLT/STM32CubeCLT_1.18.0/STLink-gdb-server/bin/ST-LINK_gdbserver.exe" programmer="F:\STM32CubeCLT\STM32CubeCLT_1.18.0\STM32CubeProgrammer\bin" />
     <st-link />
     <device interface="SWD" />
     <connection port="61234" warmup-ms="500" />

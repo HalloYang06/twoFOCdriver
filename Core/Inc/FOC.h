@@ -70,7 +70,6 @@ typedef struct {
     PID_TypeDef pid_id;         // d轴电流环PID
     PID_TypeDef pid_iq;         // q轴电流环PID
     PID_TypeDef pid_velocity;   // 速度环PID
-    PID_TypeDef pid_pos;        //位置环PID
 
     // 电流
     PhaseCurrents_TypeDef i_abc;    // 三相电流
@@ -94,19 +93,16 @@ typedef struct {
     float target_velocity;      // 目标速度 (rad/s)
     float target_id;            // 目标d轴电流 (通常为0)
     float target_iq;            // 目标q轴电流 (由速度环输出)
-    float target_pos;           //目标位置
 
     // 电机参数
     uint8_t pole_pairs;         // 极对数
     float voltage_supply;       // 供电电压 (V)
 
     // 控制标志
-    uint8_t enabled;            // FOC使能标志
+    volatile uint8_t enabled;            // FOC使能标志
     uint8_t open_loop;          // 开环模式标志
 
 } FOC_TypeDef;
-
-/* 注意: FOC控制器不再使用全局实例，而是作为Motor对象的成员 */
 
 /* ==================== PID控制器函数 ==================== */
 void PID_Init(PID_TypeDef *pid, float Kp, float Ki, float Kd, float dt, float output_limit);
@@ -130,7 +126,6 @@ void FOC_UpdateCurrents(FOC_TypeDef *foc_ctrl, PhaseCurrents_TypeDef *i_abc);
 void FOC_UpdateAngle(FOC_TypeDef *foc_ctrl, float mechanical_angle);
 void FOC_CalCurrentLoop(FOC_TypeDef *foc_ctrl);
 void FOC_CalVelocityLoop(FOC_TypeDef *foc_ctrl);
-/* FOC_UpdatePWM 已移除，PWM更新由Motor层的硬件抽象层负责 */
 void FOC_Enable(FOC_TypeDef *foc_ctrl);
 void FOC_Disable(FOC_TypeDef *foc_ctrl);
 void FOC_EmergencyStop(FOC_TypeDef *foc_ctrl);

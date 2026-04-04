@@ -93,24 +93,18 @@ set(MX_LINK_LIBS
 	
 )
 # Interface library for includes and symbols
-add_library(stm32cubemx INTERFACE
-		../../Core/Src/vofa_debug.c
-		../../Core/Inc/vofa_debug.h)
+add_library(stm32cubemx INTERFACE)
 target_include_directories(stm32cubemx INTERFACE ${MX_Include_Dirs})
 target_compile_definitions(stm32cubemx INTERFACE ${MX_Defines_Syms})
 
 # Create STM32_Drivers static library
-add_library(STM32_Drivers OBJECT
-		../../Core/Src/vofa_debug.c
-		../../Core/Inc/vofa_debug.h)
+add_library(STM32_Drivers OBJECT)
 target_sources(STM32_Drivers PRIVATE ${STM32_Drivers_Src})
 target_link_libraries(STM32_Drivers PUBLIC stm32cubemx)
 
 
 # Create FreeRTOS static library
-add_library(FreeRTOS OBJECT
-		../../Core/Src/vofa_debug.c
-		../../Core/Inc/vofa_debug.h)
+add_library(FreeRTOS OBJECT)
 target_sources(FreeRTOS PRIVATE ${FreeRTOS_Src})
 target_link_libraries(FreeRTOS PUBLIC stm32cubemx)
 

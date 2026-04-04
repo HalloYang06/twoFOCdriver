@@ -50,6 +50,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         Core/Inc/motor_hardware.h
         Core/Src/vofa_debug.c
         Core/Inc/vofa_debug.h
+        Core/Src/tamagawa.c
+        Core/Inc/tamagawa.h
+
 )
 
 # Add STM32CubeMX generated sources

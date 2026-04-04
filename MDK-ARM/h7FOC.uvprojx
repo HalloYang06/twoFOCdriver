@@ -10,7 +10,7 @@
       <TargetName>h7FOC</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060960::V5.06 update 7 (build 960)::ARMCC</pCCUsed>
+      <pCCUsed>5060960::V5.06 update 7 (build 960)::.\ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -186,7 +186,6 @@
             <RvdsVP>3</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
-            <nBranchProt>0</nBranchProt>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -430,6 +429,11 @@
               <FilePath>..\Core\Src\vofa_debug.c</FilePath>
             </File>
             <File>
+              <FileName>tamagawa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\tamagawa.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
@@ -607,7 +611,7 @@
             <File>
               <FileName>arm_cortexM7lfdp_math.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>D:\KeilMDK\ARM\PACK\ARM\CMSIS\5.7.0\CMSIS\DSP\Lib\ARM\arm_cortexM7lfdp_math.lib</FilePath>
+              <FilePath>F:\Keil\ARM\CMSIS\5.7.0\CMSIS\DSP\Lib\ARM\arm_cortexM7lfdp_math.lib</FilePath>
             </File>
             <File>
               <FileName>system_stm32h7xx.c</FileName>

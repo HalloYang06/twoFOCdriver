@@ -1288,10 +1288,10 @@ interwork --depend=h7foc\startup_stm32h750xx.d -oh7foc\startup_stm32h750xx.o -I
 iver/Inc/Legacy -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middl
 ewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/F
 reeRTOS/Source/portable/RVDS/ARM_CM4F -I../Drivers/CMSIS/Device/ST/STM32H7xx/In
-clude -I../Drivers/CMSIS/Include -I.\RTE\_h7FOC -ID:\KeilMDK\ARM\PACK\ARM\CMSIS
-\6.1.0\CMSIS\Core\Include --predefine="__UVISION_VERSION SETA 540" --predefine=
-"STM32H750xx SETA 1" --predefine="_RTE_ SETA 1" --list=startup_stm32h750xx.lst 
-startup_stm32h750xx.s
+clude -I../Drivers/CMSIS/Include -I.\RTE\_h7FOC -IF:\Keil\ARM\CMSIS\5.7.0\CMSIS
+\Core\Include --predefine="__UVISION_VERSION SETA 532" --predefine="_RTE_ SETA 
+1" --predefine="STM32H750xx SETA 1" --predefine="_RTE_ SETA 1" --list=startup_s
+tm32h750xx.lst startup_stm32h750xx.s
 
 
 

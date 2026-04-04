@@ -1,7 +1,7 @@
 h7foc\croutine.o: ../Middlewares/Third_Party/FreeRTOS/Source/croutine.c
 h7foc\croutine.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
-h7foc\croutine.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stddef.h
-h7foc\croutine.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdint.h
+h7foc\croutine.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+h7foc\croutine.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 h7foc\croutine.o: ../Core/Inc/FreeRTOSConfig.h
 h7foc\croutine.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
 h7foc\croutine.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h

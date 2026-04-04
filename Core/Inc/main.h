@@ -84,6 +84,12 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOD
 #define LED2_Pin GPIO_PIN_3
 #define LED2_GPIO_Port GPIOD
+#define DMC1_RE_Pin GPIO_PIN_4
+#define DMC1_RE_GPIO_Port GPIOD
+#define DMC1_TX_Pin GPIO_PIN_5
+#define DMC1_TX_GPIO_Port GPIOD
+#define DMC1_RX_Pin GPIO_PIN_6
+#define DMC1_RX_GPIO_Port GPIOD
 #define KEY1_Pin GPIO_PIN_7
 #define KEY1_GPIO_Port GPIOD
 #define KEY2_Pin GPIO_PIN_3

@@ -8,7 +8,7 @@ h7foc\foc.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h
 h7foc\foc.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h
 h7foc\foc.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h750xx.h
 h7foc\foc.o: ../Drivers/CMSIS/Include/core_cm7.h
-h7foc\foc.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stdint.h
+h7foc\foc.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 h7foc\foc.o: ../Drivers/CMSIS/Include/cmsis_version.h
 h7foc\foc.o: ../Drivers/CMSIS/Include/cmsis_compiler.h
 h7foc\foc.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
@@ -16,8 +16,8 @@ h7foc\foc.o: ../Drivers/CMSIS/Include/mpu_armv7.h
 h7foc\foc.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h
 h7foc\foc.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h
 h7foc\foc.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
-h7foc\foc.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\stddef.h
-h7foc\foc.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\math.h
+h7foc\foc.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+h7foc\foc.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\math.h
 h7foc\foc.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc_ex.h
 h7foc\foc.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h
 h7foc\foc.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio_ex.h
@@ -44,12 +44,11 @@ h7foc\foc.o: ../Core/Inc/encoder.h
 h7foc\foc.o: ../Core/Inc/tim.h
 h7foc\foc.o: ../Core/Inc/current_sense.h
 h7foc\foc.o: ../Core/Inc/adc.h
-h7foc\foc.o: ../Core/Inc/pwm_driver.h
-h7foc\foc.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\string.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/arm_math.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/arm_math_types.h
-h7foc\foc.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\float.h
-h7foc\foc.o: D:\KeilMDK\ARM\ARMCC\Bin\..\include\limits.h
+h7foc\foc.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\string.h
+h7foc\foc.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\float.h
+h7foc\foc.o: F:\keil_v5\ARM\ARMCC\Bin\..\include\limits.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/arm_math_memory.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/dsp/none.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/dsp/utils.h
@@ -69,3 +68,4 @@ h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/dsp/transform_functions.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/dsp/filtering_functions.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/dsp/quaternion_math_functions.h
 h7foc\foc.o: ../Drivers/CMSIS-DSP/Include/dsp/window_functions.h
+h7foc\foc.o: ../Core/Inc/pwm_driver.h
