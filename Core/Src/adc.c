@@ -21,13 +21,7 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-#include "current_sense.h"
-
-uint16_t voltage_buffer[ADC_RX_BUFFER];
-
-// 电流采样对象（如果有多个电机，可以定义多个）
-extern CurrentSense_TypeDef current_sense_M1;  // 需在main.c中定义
-
+/* Core 中不再放业务采样对象，ADC 文件只保留 CubeMX 生成配置。 */
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;
@@ -178,7 +172,7 @@ void MX_ADC2_Init(void)
   hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.NbrOfConversion = 1;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
-  hadc2.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
+  hadc2.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
   hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc2.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc2.Init.OversamplingMode = DISABLE;

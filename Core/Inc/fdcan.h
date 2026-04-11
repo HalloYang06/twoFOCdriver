@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    adc.h
+  * @file    fdcan.h
   * @brief   This file contains all the function prototypes for
-  *          the adc.c file
+  *          the fdcan.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __ADC_H__
-#define __ADC_H__
+#ifndef __FDCAN_H__
+#define __FDCAN_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,16 +32,13 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern ADC_HandleTypeDef hadc1;
-
-extern ADC_HandleTypeDef hadc2;
+extern FDCAN_HandleTypeDef hfdcan1;
 
 /* USER CODE BEGIN Private defines */
-/* Core 中的 ADC 头文件只保留 CubeMX 生成内容。 */
+
 /* USER CODE END Private defines */
 
-void MX_ADC1_Init(void);
-void MX_ADC2_Init(void);
+void MX_FDCAN1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -51,5 +48,5 @@ void MX_ADC2_Init(void);
 }
 #endif
 
-#endif /* __ADC_H__ */
+#endif /* __FDCAN_H__ */
 
