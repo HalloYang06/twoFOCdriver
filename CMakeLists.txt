@@ -7,94 +7,100 @@ cmake_minimum_required(VERSION 3.22)
 # User is free to modify the file as much as necessary
 #
 
-# Setup compiler settings
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-
-# Define the build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-# Set the project name
 set(CMAKE_PROJECT_NAME h7FOC)
 
-# Include toolchain file
 include("cmake/gcc-arm-none-eabi.cmake")
-
-# Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-# Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
-# Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
-# Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
-        Core/Src/encoder.c
-        Core/Inc/encoder.h
-        Core/Src/current_sense.c
-        Core/Inc/current_sense.h
-        Core/Src/FOC.c
-        Core/Inc/FOC.h
-        Core/Src/pwm_driver.c
-        Core/Inc/pwm_driver.h
-        Core/Src/motor.c
-        Core/Inc/motor.h
-        Core/Src/motor_hardware.c
-        Core/Inc/motor_hardware.h
-        Core/Src/vofa_debug.c
-        Core/Inc/vofa_debug.h
-        Core/Src/tamagawa.c
-        Core/Inc/tamagawa.h
+        MC/mc_foc.c
+        MC/axis.c
 
+        BSP/bsp_pwm.c
+        BSP/bsp_current_sense.c
+        BSP/bsp_encoder_abz.c
+        BSP/bsp_tamagawa_uart.c
+        BSP/bsp_uart.c
+        BSP/bsp_can.c
+        BSP/bsp_eth.c
+
+        libraries/control/pid.c
+        libraries/math/mc_math.c
+        libraries/math/mc_sin_table.c
+        libraries/foc/foc_sincos.c
+        libraries/foc/svpwm.c
+        libraries/filter/filter_fo.c
+        libraries/filter/filter_so.c
+        libraries/filter/filter_notch.c
+        libraries/filter/filter_offset.c
+
+        comm/debug/comm_vofa.c
+        comm/link/comm_can.c
+        comm/link/comm_eth.c
+        comm/protocol/comm_modbus.c
+        comm/protocol/comm_can_ctrl.c
+        comm/protocol/comm_ecat_if.c
+
+        app/app_main.c
+        app/app_axis.c
+        app/app_comm.c
 )
 
-# Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
-
-# Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
-#add libraries
-# 定义CMSISCORE路径，让CMSIS-DSP能找到CMSIS核心头文件
+
 set(CMSISCORE ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Core)
 add_subdirectory(Drivers/CMSIS-DSP)
-# Link libraries to executable
-target_link_libraries(${CMAKE_PROJECT_NAME} 
-    
+
+target_link_libraries(${CMAKE_PROJECT_NAME}
     CMSISDSP
 )
-#add include paths
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Core/Include
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS-DSP/Include
+        ${CMAKE_SOURCE_DIR}/BSP
+        ${CMAKE_SOURCE_DIR}/libraries/control
+        ${CMAKE_SOURCE_DIR}/libraries/math
+        ${CMAKE_SOURCE_DIR}/libraries/foc
+        ${CMAKE_SOURCE_DIR}/libraries/filter
+        ${CMAKE_SOURCE_DIR}/MC
+        ${CMAKE_SOURCE_DIR}/comm
+        ${CMAKE_SOURCE_DIR}/comm/debug
+        ${CMAKE_SOURCE_DIR}/comm/link
+        ${CMAKE_SOURCE_DIR}/comm/protocol
+        ${CMAKE_SOURCE_DIR}/app
 )
-# Add sources to executable
+
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
 )
 
-# Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
 )
 
-# Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
 )
 
-# Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 

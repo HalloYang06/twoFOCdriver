@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_PWR_LDO_SUPPLY,USE_HAL_DRIVER,STM32H750xx,ARM_MATH_DSP,ARM_MATH_MATRIX_CHECK,ARM_MATH_ROUNDING</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Drivers/CMSIS-DSP/Include</IncludePath>
+              <IncludePath>../Core/Inc;../BSP;../libraries/control;../libraries/math;../libraries/foc;../libraries/filter;../MC;../comm;../comm/debug;../comm/link;../comm/protocol;../comm/map;../app;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Drivers/CMSIS-DSP/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -357,7 +357,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Core/Inc;../BSP;../libraries/control;../libraries/math;../libraries/foc;../libraries/filter;../MC;../comm;../comm/debug;../comm/link;../comm/protocol;../comm/map;../app;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -394,44 +394,139 @@
           <GroupName>Application/User/Core</GroupName>
           <Files>
             <File>
-              <FileName>encoder.c</FileName>
+              <FileName>bsp_pwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\encoder.c</FilePath>
+              <FilePath>../BSP/bsp_pwm.c</FilePath>
             </File>
             <File>
-              <FileName>FOC.c</FileName>
+              <FileName>bsp_current_sense.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\FOC.c</FilePath>
+              <FilePath>../BSP/bsp_current_sense.c</FilePath>
             </File>
             <File>
-              <FileName>motor.c</FileName>
+              <FileName>bsp_encoder_abz.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\motor.c</FilePath>
+              <FilePath>../BSP/bsp_encoder_abz.c</FilePath>
             </File>
             <File>
-              <FileName>motor_hardware.c</FileName>
+              <FileName>bsp_tamagawa_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\motor_hardware.c</FilePath>
+              <FilePath>../BSP/bsp_tamagawa_uart.c</FilePath>
             </File>
             <File>
-              <FileName>pwm_driver.c</FileName>
+              <FileName>bsp_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\pwm_driver.c</FilePath>
+              <FilePath>../BSP/bsp_uart.c</FilePath>
             </File>
             <File>
-              <FileName>current_sense.c</FileName>
+              <FileName>bsp_can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\current_sense.c</FilePath>
+              <FilePath>../BSP/bsp_can.c</FilePath>
             </File>
             <File>
-              <FileName>vofa_debug.c</FileName>
+              <FileName>bsp_eth.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\vofa_debug.c</FilePath>
+              <FilePath>../BSP/bsp_eth.c</FilePath>
             </File>
             <File>
-              <FileName>tamagawa.c</FileName>
+              <FileName>pid.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Core\Src\tamagawa.c</FilePath>
+              <FilePath>../libraries/control/pid.c</FilePath>
+            </File>
+            <File>
+              <FileName>mc_math.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/math/mc_math.c</FilePath>
+            </File>
+            <File>
+              <FileName>mc_sin_table.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/math/mc_sin_table.c</FilePath>
+            </File>
+            <File>
+              <FileName>foc_sincos.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/foc/foc_sincos.c</FilePath>
+            </File>
+            <File>
+              <FileName>svpwm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/foc/svpwm.c</FilePath>
+            </File>
+            <File>
+              <FileName>filter_fo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/filter/filter_fo.c</FilePath>
+            </File>
+            <File>
+              <FileName>filter_so.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/filter/filter_so.c</FilePath>
+            </File>
+            <File>
+              <FileName>filter_notch.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/filter/filter_notch.c</FilePath>
+            </File>
+            <File>
+              <FileName>filter_offset.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../libraries/filter/filter_offset.c</FilePath>
+            </File>
+            <File>
+              <FileName>mc_foc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../MC/mc_foc.c</FilePath>
+            </File>
+            <File>
+              <FileName>axis.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../MC/axis.c</FilePath>
+            </File>
+            <File>
+              <FileName>comm_vofa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../comm/debug/comm_vofa.c</FilePath>
+            </File>
+            <File>
+              <FileName>comm_can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../comm/link/comm_can.c</FilePath>
+            </File>
+            <File>
+              <FileName>comm_eth.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../comm/link/comm_eth.c</FilePath>
+            </File>
+            <File>
+              <FileName>comm_modbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../comm/protocol/comm_modbus.c</FilePath>
+            </File>
+            <File>
+              <FileName>comm_can_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../comm/protocol/comm_can_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>comm_ecat_if.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../comm/protocol/comm_ecat_if.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../app/app_main.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_axis.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../app/app_axis.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_comm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../app/app_comm.c</FilePath>
             </File>
             <File>
               <FileName>main.c</FileName>
@@ -457,6 +552,62 @@
               <FileName>dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>fdcan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/fdcan.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
             <File>
               <FileName>memorymap.c</FileName>
@@ -592,6 +743,62 @@
               <FileName>stm32h7xx_hal_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32h7xx_hal_fdcan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_fdcan.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
             <File>
               <FileName>stm32h7xx_hal_uart.c</FileName>
