@@ -57,3 +57,13 @@ uint8_t comm_od_core_read_ecat_rxpdo(comm_od_ecat_rxpdo_t *out)
 
     return out->valid;
 }
+
+void comm_od_core_clear_ecat_rxpdo(void)
+{
+    g_comm_od_core.rxpdo_seq = 0U;
+    g_comm_od_core.rxpdo_shadow.control_word = 0U;
+    g_comm_od_core.rxpdo_shadow.target_position = 0;
+    g_comm_od_core.rxpdo_shadow.target_velocity = 0;
+    g_comm_od_core.rxpdo_shadow.mode_of_operation = 0;
+    g_comm_od_core.rxpdo_shadow.valid = 0U;
+}

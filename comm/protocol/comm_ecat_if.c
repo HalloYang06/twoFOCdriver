@@ -7,6 +7,7 @@
 #include "app_axis.h"
 #include "bsp_lan9252.h"
 #include "cia402appl.h"
+#include "comm_od_core.h"
 #include "ecatslv.h"
 #include "esc.h"
 
@@ -26,15 +27,6 @@ extern TCiA402Axis LocalAxes[MAX_AXES];
 #define COMM_ECAT_MODE_CSV 9
 #define COMM_ECAT_MODE_CST 10
 
-typedef struct
-{
-    uint16_t control_word;
-    int32_t target_position;
-    int32_t target_velocity;
-    int16_t mode_of_operation;
-    uint8_t valid;
-} comm_ecat_rxpdo_shadow_t;
-
 static uint8_t g_ecat_ready = 0U;
 static uint8_t g_ecat_failed = 0U;
 static uint8_t g_ecat_health_ok = 0U;
@@ -42,8 +34,7 @@ static uint16_t g_last_control_word = 0U;
 static int32_t g_last_target_position = 0;
 static uint32_t g_health_divider = 0U;
 static uint8_t g_bad_health_samples = 0U;
-static volatile uint32_t g_rxpdo_seq = 0U;
-static volatile comm_ecat_rxpdo_shadow_t g_rxpdo_shadow = {0};
+static uint32_t g_rxpdo_update_count = 0U;
 static volatile uint32_t g_sync0_irq_seq = 0U;
 static uint32_t g_sync0_irq_seq_handled = 0U;
 static comm_ecat_trigger_source_t g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
@@ -155,28 +146,14 @@ static axis_mode_t comm_ecat_axis_mode_from_cia402(INT16 cia402_mode)
 
 static void comm_ecat_apply_cia402_commands(void)
 {
-    comm_ecat_rxpdo_shadow_t rxpdo_cmd;
-    uint32_t seq_start;
-    uint32_t seq_end;
+    comm_od_ecat_rxpdo_t rxpdo_cmd = {0};
     uint16_t control_word = (uint16_t)LocalAxes[0].Objects.objControlWord;
     int16_t mode_of_operation = LocalAxes[0].Objects.objModesOfOperation;
     int32_t target_pos_raw = LocalAxes[0].Objects.objTargetPosition;
     int32_t target_vel_raw = LocalAxes[0].Objects.objTargetVelocity;
     axis_mode_t requested_mode;
 
-    do
-    {
-        seq_start = g_rxpdo_seq;
-        if ((seq_start & 0x1U) != 0U)
-        {
-            continue;
-        }
-
-        rxpdo_cmd = g_rxpdo_shadow;
-        seq_end = g_rxpdo_seq;
-    } while (seq_start != seq_end);
-
-    if (rxpdo_cmd.valid != 0U)
+    if (comm_od_core_read_ecat_rxpdo(&rxpdo_cmd) != 0U)
     {
         control_word = rxpdo_cmd.control_word;
         mode_of_operation = rxpdo_cmd.mode_of_operation;
@@ -317,12 +294,8 @@ void comm_ecat_if_init(void)
     g_last_target_position = 0;
     g_health_divider = 0U;
     g_bad_health_samples = 0U;
-    g_rxpdo_seq = 0U;
-    g_rxpdo_shadow.control_word = 0U;
-    g_rxpdo_shadow.target_position = 0;
-    g_rxpdo_shadow.target_velocity = 0;
-    g_rxpdo_shadow.mode_of_operation = 0;
-    g_rxpdo_shadow.valid = 0U;
+    g_rxpdo_update_count = 0U;
+    comm_od_core_clear_ecat_rxpdo();
     g_sync0_irq_seq = 0U;
     g_sync0_irq_seq_handled = 0U;
     g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
@@ -387,12 +360,8 @@ void comm_ecat_if_force_reinit(void)
     g_last_target_position = 0;
     g_health_divider = 0U;
     g_bad_health_samples = 0U;
-    g_rxpdo_seq = 0U;
-    g_rxpdo_shadow.control_word = 0U;
-    g_rxpdo_shadow.target_position = 0;
-    g_rxpdo_shadow.target_velocity = 0;
-    g_rxpdo_shadow.mode_of_operation = 0;
-    g_rxpdo_shadow.valid = 0U;
+    g_rxpdo_update_count = 0U;
+    comm_od_core_clear_ecat_rxpdo();
     g_sync0_irq_seq = 0U;
     g_sync0_irq_seq_handled = 0U;
     g_last_al_status = 0U;
@@ -413,7 +382,6 @@ comm_ecat_trigger_source_t comm_ecat_if_get_trigger_source(void)
 void comm_ecat_if_get_diag(comm_ecat_diag_t *diag)
 {
     uint32_t irq_state;
-    uint32_t rxpdo_seq;
 
     if (diag == 0)
     {
@@ -437,8 +405,7 @@ void comm_ecat_if_get_diag(comm_ecat_diag_t *diag)
     diag->axis_apply_cycles = g_axis_apply_cycles;
     diag->sync0_irq_count = g_sync0_irq_seq;
     diag->sync0_irq_handled_count = g_sync0_irq_seq_handled;
-    rxpdo_seq = g_rxpdo_seq;
-    diag->rxpdo_update_count = (rxpdo_seq >> 1U);
+    diag->rxpdo_update_count = g_rxpdo_update_count;
     diag->last_al_status = g_last_al_status;
 
     bsp_lan9252_irq_unlock(irq_state);
@@ -454,13 +421,8 @@ void comm_ecat_if_on_rxpdo(uint16_t control_word,
                            int32_t target_velocity,
                            int16_t mode_of_operation)
 {
-    g_rxpdo_seq++;
-    g_rxpdo_shadow.control_word = control_word;
-    g_rxpdo_shadow.target_position = target_position;
-    g_rxpdo_shadow.target_velocity = target_velocity;
-    g_rxpdo_shadow.mode_of_operation = mode_of_operation;
-    g_rxpdo_shadow.valid = 1U;
-    g_rxpdo_seq++;
+    comm_od_core_write_ecat_rxpdo(control_word, target_position, target_velocity, mode_of_operation);
+    g_rxpdo_update_count++;
 }
 
 void comm_ecat_if_fill_txpdo(uint16_t *status_word,
