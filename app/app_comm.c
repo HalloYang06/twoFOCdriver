@@ -13,6 +13,7 @@
 #endif
 
 static uint16_t g_vofa_divider = 0U;
+static uint16_t g_ecat_init_retry_divider = 0U;
 
 void App_CommInit(void)
 {
@@ -47,6 +48,19 @@ void App_CommTick(void)
 
     comm_modbus_process();
 #if APP_ECAT_ENABLE
+    if (!comm_ecat_if_is_ready())
+    {
+        g_ecat_init_retry_divider++;
+        if (g_ecat_init_retry_divider >= 1000U)
+        {
+            g_ecat_init_retry_divider = 0U;
+            comm_ecat_if_init();
+        }
+        return;
+    }
+
+    g_ecat_init_retry_divider = 0U;
+
     if (bDcSyncActive)
     {
         comm_ecat_if_set_trigger_source(COMM_ECAT_TRIGGER_SYNC0);

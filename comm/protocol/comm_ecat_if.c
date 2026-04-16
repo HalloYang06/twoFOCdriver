@@ -272,7 +272,7 @@ static void comm_ecat_health_poll(void)
 
 void comm_ecat_if_init(void)
 {
-    if (g_ecat_ready || g_ecat_failed)
+    if (g_ecat_ready)
     {
         return;
     }
