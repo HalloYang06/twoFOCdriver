@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+#include "comm_modbus_regs.h"
+
 #define READ_FLOAT_REG(reg_base, field) \
     case (reg_base): \
     case (reg_base) + 1U: \
@@ -10,6 +12,21 @@
         return COMM_OK
 
 static axis_t *g_axis0;
+
+static uint32_t comm_od_irq_lock(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    return primask;
+}
+
+static void comm_od_irq_unlock(uint32_t primask)
+{
+    if ((primask & 0x1U) == 0U)
+    {
+        __enable_irq();
+    }
+}
 
 static void comm_od_float_to_words(float value, uint16_t *hi, uint16_t *lo)
 {
@@ -101,6 +118,7 @@ comm_status_t comm_od_read_input_word(uint16_t reg_addr, uint16_t *out_word)
 comm_status_t comm_od_write_single(uint16_t reg_addr, uint16_t value)
 {
     axis_t *ax = g_axis0;
+    uint32_t irq_state;
 
     if (ax == 0)
     {
@@ -115,8 +133,10 @@ comm_status_t comm_od_write_single(uint16_t reg_addr, uint16_t value)
         case COMM_MODBUS_REG_CMD_AXIS0_ENABLE:
             if (value != 0U)
             {
+                irq_state = comm_od_irq_lock();
                 axis_set_position_ref(ax, ax->position_mech_rad);
                 axis_stop_move(ax);
+                comm_od_irq_unlock(irq_state);
                 axis_enable(ax);
             }
             else
@@ -129,16 +149,22 @@ comm_status_t comm_od_write_single(uint16_t reg_addr, uint16_t value)
         case COMM_MODBUS_REG_CMD_AXIS0_MOVE:
             if (value != 0U)
             {
+                irq_state = comm_od_irq_lock();
                 axis_request_move(ax);
+                comm_od_irq_unlock(irq_state);
             }
             else
             {
+                irq_state = comm_od_irq_lock();
                 axis_stop_move(ax);
+                comm_od_irq_unlock(irq_state);
             }
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_CTRL_MODE:
+            irq_state = comm_od_irq_lock();
             axis_set_mode(ax, (axis_mode_t)value);
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         default:
@@ -150,6 +176,7 @@ comm_status_t comm_od_write_multi_words(uint16_t reg_addr, const uint16_t *words
 {
     axis_t *ax = g_axis0;
     float value;
+    uint32_t irq_state;
 
     if ((words == 0) || (quantity == 0U) || (ax == 0))
     {
@@ -171,47 +198,69 @@ comm_status_t comm_od_write_multi_words(uint16_t reg_addr, const uint16_t *words
     switch (reg_addr)
     {
         case COMM_MODBUS_REG_HOLD_AXIS0_TARGET_POS:
+            irq_state = comm_od_irq_lock();
             axis_set_position_ref(ax, value);
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_AXIS0_TARGET_SPEED:
+            irq_state = comm_od_irq_lock();
             axis_set_velocity_ref(ax, value);
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_IQ_REF:
+            irq_state = comm_od_irq_lock();
             axis_set_current_ref(ax, value);
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_SPEED_KP:
+            irq_state = comm_od_irq_lock();
             ax->foc.pid_velocity.kp = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_SPEED_KI:
+            irq_state = comm_od_irq_lock();
             ax->foc.pid_velocity.ki = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_POS_KP:
+            irq_state = comm_od_irq_lock();
             ax->pid_position.kp = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_POS_KI:
+            irq_state = comm_od_irq_lock();
             ax->pid_position.ki = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_IQ_KP:
+            irq_state = comm_od_irq_lock();
             ax->foc.pid_iq.kp = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_IQ_KI:
+            irq_state = comm_od_irq_lock();
             ax->foc.pid_iq.ki = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_ID_KP:
+            irq_state = comm_od_irq_lock();
             ax->foc.pid_id.kp = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_ID_KI:
+            irq_state = comm_od_irq_lock();
             ax->foc.pid_id.ki = value;
+            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         default:

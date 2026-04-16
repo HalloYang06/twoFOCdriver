@@ -7,6 +7,10 @@
 #include "comm_vofa.h"
 #include "usart.h"
 
+#ifndef APP_ECAT_ENABLE
+#define APP_ECAT_ENABLE 1
+#endif
+
 static uint16_t g_vofa_divider = 0U;
 
 void App_CommInit(void)
@@ -15,7 +19,9 @@ void App_CommInit(void)
     bsp_uart_comm_bind(&huart3);
     comm_modbus_bind_axis0(&g_axis0);
     comm_modbus_init();
+#if APP_ECAT_ENABLE
     comm_ecat_if_init();
+#endif
     comm_vofa_init(&huart4);
 }
 
@@ -39,7 +45,9 @@ void App_CommTick(void)
     }
 
     comm_modbus_process();
+#if APP_ECAT_ENABLE
     comm_ecat_if_process();
+#endif
 }
 
 void App_CommUartTxCplt(UART_HandleTypeDef *huart)
