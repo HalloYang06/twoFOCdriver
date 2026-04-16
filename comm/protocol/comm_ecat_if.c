@@ -41,7 +41,8 @@ static uint32_t g_health_divider = 0U;
 static uint8_t g_bad_health_samples = 0U;
 static volatile uint32_t g_rxpdo_seq = 0U;
 static volatile comm_ecat_rxpdo_shadow_t g_rxpdo_shadow = {0};
-static volatile uint8_t g_sync0_pending = 0U;
+static volatile uint32_t g_sync0_irq_seq = 0U;
+static uint32_t g_sync0_irq_seq_handled = 0U;
 static comm_ecat_trigger_source_t g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
 
 static uint16_t comm_ecat_build_status_word(void)
@@ -266,7 +267,8 @@ void comm_ecat_if_init(void)
     g_rxpdo_shadow.target_velocity = 0;
     g_rxpdo_shadow.mode_of_operation = 0;
     g_rxpdo_shadow.valid = 0U;
-    g_sync0_pending = 0U;
+    g_sync0_irq_seq = 0U;
+    g_sync0_irq_seq_handled = 0U;
     g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
 }
 
@@ -283,10 +285,10 @@ void comm_ecat_if_process(void)
     {
         run_now = 1U;
     }
-    else if (g_sync0_pending != 0U)
+    else if (g_sync0_irq_seq_handled != g_sync0_irq_seq)
     {
         run_now = 1U;
-        g_sync0_pending = 0U;
+        g_sync0_irq_seq_handled = g_sync0_irq_seq;
     }
 
     if (run_now == 0U)
@@ -322,7 +324,7 @@ comm_ecat_trigger_source_t comm_ecat_if_get_trigger_source(void)
 
 void comm_ecat_if_on_sync0_irq(void)
 {
-    g_sync0_pending = 1U;
+    g_sync0_irq_seq++;
 }
 
 void comm_ecat_if_on_rxpdo(uint16_t control_word,

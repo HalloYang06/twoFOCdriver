@@ -5,6 +5,7 @@
 #include "comm_modbus.h"
 #include "comm_ecat_if.h"
 #include "comm_vofa.h"
+#include "ecatslv.h"
 #include "usart.h"
 
 #ifndef APP_ECAT_ENABLE
@@ -46,6 +47,14 @@ void App_CommTick(void)
 
     comm_modbus_process();
 #if APP_ECAT_ENABLE
+    if (bDcSyncActive)
+    {
+        comm_ecat_if_set_trigger_source(COMM_ECAT_TRIGGER_SYNC0);
+    }
+    else
+    {
+        comm_ecat_if_set_trigger_source(COMM_ECAT_TRIGGER_TIM7);
+    }
     comm_ecat_if_process();
 #endif
 }
