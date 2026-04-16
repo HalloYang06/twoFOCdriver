@@ -3,6 +3,7 @@
 typedef struct
 {
     axis_t *axis0;
+    volatile uint32_t rxpdo_update_count;
     volatile uint32_t rxpdo_seq;
     volatile comm_od_ecat_rxpdo_t rxpdo_shadow;
     volatile uint32_t txpdo_seq;
@@ -26,6 +27,7 @@ void comm_od_core_write_ecat_rxpdo(uint16_t control_word,
                                    int32_t target_velocity,
                                    int16_t mode_of_operation)
 {
+    g_comm_od_core.rxpdo_update_count++;
     g_comm_od_core.rxpdo_seq++;
     g_comm_od_core.rxpdo_shadow.control_word = control_word;
     g_comm_od_core.rxpdo_shadow.target_position = target_position;
@@ -60,8 +62,14 @@ uint8_t comm_od_core_read_ecat_rxpdo(comm_od_ecat_rxpdo_t *out)
     return out->valid;
 }
 
+uint32_t comm_od_core_get_ecat_rxpdo_update_count(void)
+{
+    return g_comm_od_core.rxpdo_update_count;
+}
+
 void comm_od_core_clear_ecat_rxpdo(void)
 {
+    g_comm_od_core.rxpdo_update_count = 0U;
     g_comm_od_core.rxpdo_seq = 0U;
     g_comm_od_core.rxpdo_shadow.control_word = 0U;
     g_comm_od_core.rxpdo_shadow.target_position = 0;

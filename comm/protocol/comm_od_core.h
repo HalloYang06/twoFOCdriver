@@ -33,6 +33,7 @@ void comm_od_core_write_ecat_rxpdo(uint16_t control_word,
                                    int16_t mode_of_operation);
 
 uint8_t comm_od_core_read_ecat_rxpdo(comm_od_ecat_rxpdo_t *out);
+uint32_t comm_od_core_get_ecat_rxpdo_update_count(void);
 void comm_od_core_clear_ecat_rxpdo(void);
 
 void comm_od_core_write_ecat_txpdo(uint16_t status_word,

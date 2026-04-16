@@ -34,7 +34,6 @@ static uint16_t g_last_control_word = 0U;
 static int32_t g_last_target_position = 0;
 static uint32_t g_health_divider = 0U;
 static uint8_t g_bad_health_samples = 0U;
-static uint32_t g_rxpdo_update_count = 0U;
 static volatile uint32_t g_sync0_irq_seq = 0U;
 static uint32_t g_sync0_irq_seq_handled = 0U;
 static comm_ecat_trigger_source_t g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
@@ -293,7 +292,6 @@ void comm_ecat_if_init(void)
     g_last_target_position = 0;
     g_health_divider = 0U;
     g_bad_health_samples = 0U;
-    g_rxpdo_update_count = 0U;
     comm_od_core_clear_ecat_rxpdo();
     comm_od_core_clear_ecat_txpdo();
     g_sync0_irq_seq = 0U;
@@ -360,7 +358,6 @@ void comm_ecat_if_force_reinit(void)
     g_last_target_position = 0;
     g_health_divider = 0U;
     g_bad_health_samples = 0U;
-    g_rxpdo_update_count = 0U;
     comm_od_core_clear_ecat_rxpdo();
     comm_od_core_clear_ecat_txpdo();
     g_sync0_irq_seq = 0U;
@@ -406,7 +403,7 @@ void comm_ecat_if_get_diag(comm_ecat_diag_t *diag)
     diag->axis_apply_cycles = g_axis_apply_cycles;
     diag->sync0_irq_count = g_sync0_irq_seq;
     diag->sync0_irq_handled_count = g_sync0_irq_seq_handled;
-    diag->rxpdo_update_count = g_rxpdo_update_count;
+    diag->rxpdo_update_count = comm_od_core_get_ecat_rxpdo_update_count();
     diag->last_al_status = g_last_al_status;
 
     bsp_lan9252_irq_unlock(irq_state);
@@ -416,15 +413,6 @@ void comm_ecat_if_on_sync0_irq(void)
 {
     g_sync0_irq_seq++;
     App_AxisSync0Tick();
-}
-
-void comm_ecat_if_on_rxpdo(uint16_t control_word,
-                           int32_t target_position,
-                           int32_t target_velocity,
-                           int16_t mode_of_operation)
-{
-    comm_od_core_write_ecat_rxpdo(control_word, target_position, target_velocity, mode_of_operation);
-    g_rxpdo_update_count++;
 }
 
 void comm_ecat_if_fill_txpdo(uint16_t *status_word,

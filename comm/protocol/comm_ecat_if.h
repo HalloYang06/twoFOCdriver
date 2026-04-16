@@ -42,11 +42,6 @@ comm_ecat_trigger_source_t comm_ecat_if_get_trigger_source(void);
 void comm_ecat_if_get_diag(comm_ecat_diag_t *diag);
 void comm_ecat_if_on_sync0_irq(void);
 
-void comm_ecat_if_on_rxpdo(uint16_t control_word,
-                           int32_t target_position,
-                           int32_t target_velocity,
-                           int16_t mode_of_operation);
-
 void comm_ecat_if_fill_txpdo(uint16_t *status_word,
                              int32_t *actual_position,
                              int32_t *actual_velocity,

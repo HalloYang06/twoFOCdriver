@@ -56,7 +56,6 @@ V4.30 : create file (state machine; handling state transition options; input fee
 
 
 #include "coeappl.h"
-#include "comm_ecat_if.h"
 #include "comm_od_core.h"
 
 #define _CiA402_
@@ -1442,10 +1441,10 @@ void APPL_OutputMapping(UINT16* pData)
 
             if (AxisIndex == 0U)
             {
-                comm_ecat_if_on_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
-                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
-                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
-                                      (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
+                comm_od_core_write_ecat_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
+                                              (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
+                                              (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
+                                              (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
             }
 
             /*shift pointer PDO mapping object following*/
@@ -1464,10 +1463,10 @@ void APPL_OutputMapping(UINT16* pData)
 
             if (AxisIndex == 0U)
             {
-                comm_ecat_if_on_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
-                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
-                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
-                                      (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
+                comm_od_core_write_ecat_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
+                                              (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
+                                              (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
+                                              (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
             }
 
             /*shift pointer PDO mapping object following*/
@@ -1486,10 +1485,10 @@ void APPL_OutputMapping(UINT16* pData)
 
             if (AxisIndex == 0U)
             {
-                comm_ecat_if_on_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
-                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
-                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
-                                      (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
+                comm_od_core_write_ecat_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
+                                              (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
+                                              (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
+                                              (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
             }
 
             /*shift pointer PDO mapping object following*/
