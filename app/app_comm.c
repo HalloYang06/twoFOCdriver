@@ -21,6 +21,7 @@ void App_CommInit(void)
     bsp_uart_comm_bind(&huart3);
     comm_modbus_bind_axis0(&g_axis0);
     comm_modbus_init();
+    App_AxisSetSlowLoopSource(APP_AXIS_SLOW_LOOP_SRC_TIM7);
 #if APP_ECAT_ENABLE
     comm_ecat_if_init();
 #endif
@@ -50,6 +51,7 @@ void App_CommTick(void)
 #if APP_ECAT_ENABLE
     if (!comm_ecat_if_is_ready())
     {
+        App_AxisSetSlowLoopSource(APP_AXIS_SLOW_LOOP_SRC_TIM7);
         g_ecat_init_retry_divider++;
         if (g_ecat_init_retry_divider >= 1000U)
         {
@@ -63,10 +65,12 @@ void App_CommTick(void)
 
     if (bDcSyncActive)
     {
+        App_AxisSetSlowLoopSource(APP_AXIS_SLOW_LOOP_SRC_SYNC0);
         comm_ecat_if_set_trigger_source(COMM_ECAT_TRIGGER_SYNC0);
     }
     else
     {
+        App_AxisSetSlowLoopSource(APP_AXIS_SLOW_LOOP_SRC_TIM7);
         comm_ecat_if_set_trigger_source(COMM_ECAT_TRIGGER_TIM7);
     }
     comm_ecat_if_process();

@@ -18,6 +18,7 @@ __attribute__((section(".RAM_D2"))) bsp_current_sense_t g_axis0_current_sense;
 Tamagawa_TypeDef tamagawa_M0;
 
 axis_t g_axis0;
+static volatile app_axis_slow_loop_source_t g_slow_loop_source = APP_AXIS_SLOW_LOOP_SRC_TIM7;
 
 void App_AxisInit(void)
 {
@@ -45,6 +46,7 @@ void App_AxisInit(void)
     bsp_current_sense_start(g_axis0.current_sense);
     axis_set_mode(&g_axis0, AXIS_MODE_CURRENT);
     axis_set_current_ref(&g_axis0, 0.05f);
+    g_slow_loop_source = APP_AXIS_SLOW_LOOP_SRC_TIM7;
 }
 
 void App_AxisEnable(void)
@@ -57,8 +59,33 @@ void App_AxisDisable(void)
     axis_disable(&g_axis0);
 }
 
+void App_AxisSetSlowLoopSource(app_axis_slow_loop_source_t source)
+{
+    g_slow_loop_source = source;
+}
+
+app_axis_slow_loop_source_t App_AxisGetSlowLoopSource(void)
+{
+    return g_slow_loop_source;
+}
+
 void App_AxisSlowLoopTick(void)
 {
+    if (g_slow_loop_source != APP_AXIS_SLOW_LOOP_SRC_TIM7)
+    {
+        return;
+    }
+
+    axis_slow_loop_handler(&g_axis0, 0.001f);
+}
+
+void App_AxisSync0Tick(void)
+{
+    if (g_slow_loop_source != APP_AXIS_SLOW_LOOP_SRC_SYNC0)
+    {
+        return;
+    }
+
     axis_slow_loop_handler(&g_axis0, 0.001f);
 }
 

@@ -414,6 +414,7 @@ void comm_ecat_if_get_diag(comm_ecat_diag_t *diag)
 void comm_ecat_if_on_sync0_irq(void)
 {
     g_sync0_irq_seq++;
+    App_AxisSync0Tick();
 }
 
 void comm_ecat_if_on_rxpdo(uint16_t control_word,
