@@ -262,7 +262,11 @@ void comm_ecat_if_init(void)
         return;
     }
 
-    bsp_lan9252_init_default();
+    if (bsp_lan9252_is_initialized() == 0U)
+    {
+        bsp_lan9252_init_default();
+    }
+
     if (!bsp_lan9252_is_initialized())
     {
         g_ecat_health_ok = 0U;

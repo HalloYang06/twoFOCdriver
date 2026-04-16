@@ -24,6 +24,17 @@ typedef enum
 static uint8_t g_modbus_rx_frame[COMM_MODBUS_MAX_FRAME_LEN];
 static uint8_t g_modbus_tx_frame[COMM_MODBUS_MAX_FRAME_LEN];
 
+static uint16_t comm_modbus_read_be_u16(const uint8_t *src)
+{
+    return (uint16_t)(((uint16_t)src[0] << 8U) | src[1]);
+}
+
+static void comm_modbus_write_be_u16(uint8_t *dst, uint16_t value)
+{
+    dst[0] = (uint8_t)((value >> 8U) & 0xFFU);
+    dst[1] = (uint8_t)(value & 0xFFU);
+}
+
 static uint16_t comm_modbus_crc16(const uint8_t *data, uint16_t len)
 {
     uint16_t crc = 0xFFFFU;
@@ -164,8 +175,8 @@ static uint16_t comm_modbus_build_read_response(uint8_t function_code,
 
     for (index = 0U; index < quantity; ++index)
     {
-        g_modbus_tx_frame[tx_len++] = (uint8_t)((words[index] >> 8U) & 0xFFU);
-        g_modbus_tx_frame[tx_len++] = (uint8_t)(words[index] & 0xFFU);
+        comm_modbus_write_be_u16(&g_modbus_tx_frame[tx_len], words[index]);
+        tx_len += 2U;
     }
 
     return comm_modbus_append_crc(g_modbus_tx_frame, tx_len);
@@ -173,8 +184,8 @@ static uint16_t comm_modbus_build_read_response(uint8_t function_code,
 
 static uint16_t comm_modbus_handle_read_holding(const uint8_t *frame, uint16_t frame_len)
 {
-    const uint16_t start_reg = (uint16_t)(((uint16_t)frame[2] << 8U) | frame[3]);
-    const uint16_t quantity = (uint16_t)(((uint16_t)frame[4] << 8U) | frame[5]);
+    const uint16_t start_reg = comm_modbus_read_be_u16(&frame[2]);
+    const uint16_t quantity = comm_modbus_read_be_u16(&frame[4]);
 
     (void)frame_len;
     return comm_modbus_build_read_response(COMM_MODBUS_FUNC_READ_HOLDING,
@@ -185,8 +196,8 @@ static uint16_t comm_modbus_handle_read_holding(const uint8_t *frame, uint16_t f
 
 static uint16_t comm_modbus_handle_read_input(const uint8_t *frame, uint16_t frame_len)
 {
-    const uint16_t start_reg = (uint16_t)(((uint16_t)frame[2] << 8U) | frame[3]);
-    const uint16_t quantity = (uint16_t)(((uint16_t)frame[4] << 8U) | frame[5]);
+    const uint16_t start_reg = comm_modbus_read_be_u16(&frame[2]);
+    const uint16_t quantity = comm_modbus_read_be_u16(&frame[4]);
 
     (void)frame_len;
     return comm_modbus_build_read_response(COMM_MODBUS_FUNC_READ_INPUT,
@@ -197,8 +208,8 @@ static uint16_t comm_modbus_handle_read_input(const uint8_t *frame, uint16_t fra
 
 static uint16_t comm_modbus_handle_write_single(const uint8_t *frame, uint16_t frame_len)
 {
-    const uint16_t reg_addr = (uint16_t)(((uint16_t)frame[2] << 8U) | frame[3]);
-    const uint16_t value = (uint16_t)(((uint16_t)frame[4] << 8U) | frame[5]);
+    const uint16_t reg_addr = comm_modbus_read_be_u16(&frame[2]);
+    const uint16_t value = comm_modbus_read_be_u16(&frame[4]);
     uint16_t tx_len = 0U;
 
     (void)frame_len;
@@ -220,8 +231,8 @@ static uint16_t comm_modbus_handle_write_single(const uint8_t *frame, uint16_t f
 
 static uint16_t comm_modbus_handle_write_multi(const uint8_t *frame, uint16_t frame_len)
 {
-    const uint16_t reg_addr = (uint16_t)(((uint16_t)frame[2] << 8U) | frame[3]);
-    const uint16_t quantity = (uint16_t)(((uint16_t)frame[4] << 8U) | frame[5]);
+    const uint16_t reg_addr = comm_modbus_read_be_u16(&frame[2]);
+    const uint16_t quantity = comm_modbus_read_be_u16(&frame[4]);
     const uint8_t byte_count = frame[6];
     uint16_t words[125];
     uint16_t tx_len = 0U;
@@ -242,7 +253,7 @@ static uint16_t comm_modbus_handle_write_multi(const uint8_t *frame, uint16_t fr
     for (index = 0U; index < quantity; ++index)
     {
         const uint16_t data_index = (uint16_t)(7U + index * 2U);
-        words[index] = (uint16_t)(((uint16_t)frame[data_index] << 8U) | frame[data_index + 1U]);
+        words[index] = comm_modbus_read_be_u16(&frame[data_index]);
     }
 
     if (modbus_write_multi_words(reg_addr, words, quantity) != COMM_OK)
