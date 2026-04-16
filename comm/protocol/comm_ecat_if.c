@@ -23,13 +23,24 @@ extern TCiA402Axis LocalAxes[MAX_AXES];
 #define COMM_ECAT_MODE_CSV 9
 #define COMM_ECAT_MODE_CST 10
 
+typedef struct
+{
+    uint16_t control_word;
+    int32_t target_position;
+    int32_t target_velocity;
+    int16_t mode_of_operation;
+    uint8_t valid;
+} comm_ecat_rxpdo_shadow_t;
+
 static uint8_t g_ecat_ready = 0U;
 static uint8_t g_ecat_failed = 0U;
-static uint8_t g_ecat_health_ok = 1U;
+static uint8_t g_ecat_health_ok = 0U;
 static uint16_t g_last_control_word = 0U;
 static int32_t g_last_target_position = 0;
 static uint32_t g_health_divider = 0U;
 static uint8_t g_bad_health_samples = 0U;
+static volatile uint32_t g_rxpdo_seq = 0U;
+static volatile comm_ecat_rxpdo_shadow_t g_rxpdo_shadow = {0};
 
 static uint16_t comm_ecat_build_status_word(void)
 {
@@ -58,10 +69,18 @@ static uint16_t comm_ecat_build_status_word(void)
 
 static void comm_ecat_update_feedback_to_cia402(void)
 {
-    LocalAxes[0].Objects.objStatusWord = (INT16)comm_ecat_build_status_word();
-    LocalAxes[0].Objects.objPositionActualValue = (INT32)(g_axis0.position_mech_rad * COMM_ECAT_POS_SCALE);
-    LocalAxes[0].Objects.objVelocityActualValue = (INT32)(g_axis0.speed_mech_rad_s * COMM_ECAT_VEL_SCALE);
-    LocalAxes[0].Objects.objTorqueActualValue = (INT16)g_axis0.foc.i_dq.q;
+    uint16_t status_word = 0U;
+    int32_t actual_position = 0;
+    int32_t actual_velocity = 0;
+    int16_t mode_display = 0;
+    int16_t torque_actual = 0;
+
+    comm_ecat_if_fill_txpdo(&status_word, &actual_position, &actual_velocity, &mode_display, &torque_actual);
+
+    LocalAxes[0].Objects.objStatusWord = (INT16)status_word;
+    LocalAxes[0].Objects.objPositionActualValue = actual_position;
+    LocalAxes[0].Objects.objVelocityActualValue = actual_velocity;
+    LocalAxes[0].Objects.objTorqueActualValue = torque_actual;
     LocalAxes[0].Objects.objModesOfOperationDisplay = LocalAxes[0].Objects.objModesOfOperation;
 }
 
@@ -82,10 +101,36 @@ static axis_mode_t comm_ecat_axis_mode_from_cia402(INT16 cia402_mode)
 
 static void comm_ecat_apply_cia402_commands(void)
 {
-    const uint16_t control_word = (uint16_t)LocalAxes[0].Objects.objControlWord;
-    const axis_mode_t requested_mode = comm_ecat_axis_mode_from_cia402(LocalAxes[0].Objects.objModesOfOperation);
-    const int32_t target_pos_raw = LocalAxes[0].Objects.objTargetPosition;
-    const int32_t target_vel_raw = LocalAxes[0].Objects.objTargetVelocity;
+    comm_ecat_rxpdo_shadow_t rxpdo_cmd;
+    uint32_t seq_start;
+    uint32_t seq_end;
+    uint16_t control_word = (uint16_t)LocalAxes[0].Objects.objControlWord;
+    int16_t mode_of_operation = LocalAxes[0].Objects.objModesOfOperation;
+    int32_t target_pos_raw = LocalAxes[0].Objects.objTargetPosition;
+    int32_t target_vel_raw = LocalAxes[0].Objects.objTargetVelocity;
+    axis_mode_t requested_mode;
+
+    do
+    {
+        seq_start = g_rxpdo_seq;
+        if ((seq_start & 0x1U) != 0U)
+        {
+            continue;
+        }
+
+        rxpdo_cmd = g_rxpdo_shadow;
+        seq_end = g_rxpdo_seq;
+    } while (seq_start != seq_end);
+
+    if (rxpdo_cmd.valid != 0U)
+    {
+        control_word = rxpdo_cmd.control_word;
+        mode_of_operation = rxpdo_cmd.mode_of_operation;
+        target_pos_raw = rxpdo_cmd.target_position;
+        target_vel_raw = rxpdo_cmd.target_velocity;
+    }
+
+    requested_mode = comm_ecat_axis_mode_from_cia402(mode_of_operation);
     const uint8_t enable_request = (((control_word & 0x000FU) == 0x000FU) ? 1U : 0U);
 
     if (requested_mode != g_axis0.mode)
@@ -170,12 +215,14 @@ void comm_ecat_if_init(void)
     bsp_lan9252_init_default();
     if (!bsp_lan9252_is_initialized())
     {
+        g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
         return;
     }
 
     if (HW_Init() != 0U)
     {
+        g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
         return;
     }
@@ -183,6 +230,7 @@ void comm_ecat_if_init(void)
     init_err = MainInit();
     if (init_err != 0U)
     {
+        g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
         return;
     }
@@ -190,6 +238,7 @@ void comm_ecat_if_init(void)
     cia402_err = CiA402_Init();
     if (cia402_err != 0U)
     {
+        g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
         return;
     }
@@ -197,6 +246,7 @@ void comm_ecat_if_init(void)
     mapping_err = APPL_GenerateMapping(&nPdInputSize, &nPdOutputSize);
     if (mapping_err != 0U)
     {
+        g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
         return;
     }
@@ -208,6 +258,12 @@ void comm_ecat_if_init(void)
     g_last_target_position = 0;
     g_health_divider = 0U;
     g_bad_health_samples = 0U;
+    g_rxpdo_seq = 0U;
+    g_rxpdo_shadow.control_word = 0U;
+    g_rxpdo_shadow.target_position = 0;
+    g_rxpdo_shadow.target_velocity = 0;
+    g_rxpdo_shadow.mode_of_operation = 0;
+    g_rxpdo_shadow.valid = 0U;
 }
 
 void comm_ecat_if_process(void)
@@ -231,4 +287,50 @@ uint8_t comm_ecat_if_is_ready(void)
 uint8_t comm_ecat_if_is_healthy(void)
 {
     return g_ecat_health_ok;
+}
+
+void comm_ecat_if_on_rxpdo(uint16_t control_word,
+                           int32_t target_position,
+                           int32_t target_velocity,
+                           int16_t mode_of_operation)
+{
+    g_rxpdo_seq++;
+    g_rxpdo_shadow.control_word = control_word;
+    g_rxpdo_shadow.target_position = target_position;
+    g_rxpdo_shadow.target_velocity = target_velocity;
+    g_rxpdo_shadow.mode_of_operation = mode_of_operation;
+    g_rxpdo_shadow.valid = 1U;
+    g_rxpdo_seq++;
+}
+
+void comm_ecat_if_fill_txpdo(uint16_t *status_word,
+                             int32_t *actual_position,
+                             int32_t *actual_velocity,
+                             int16_t *mode_display,
+                             int16_t *torque_actual)
+{
+    if (status_word != 0)
+    {
+        *status_word = comm_ecat_build_status_word();
+    }
+
+    if (actual_position != 0)
+    {
+        *actual_position = (int32_t)(g_axis0.position_mech_rad * COMM_ECAT_POS_SCALE);
+    }
+
+    if (actual_velocity != 0)
+    {
+        *actual_velocity = (int32_t)(g_axis0.speed_mech_rad_s * COMM_ECAT_VEL_SCALE);
+    }
+
+    if (mode_display != 0)
+    {
+        *mode_display = LocalAxes[0].Objects.objModesOfOperation;
+    }
+
+    if (torque_actual != 0)
+    {
+        *torque_actual = (INT16)g_axis0.foc.i_dq.q;
+    }
 }

@@ -13,13 +13,22 @@
 #if !defined(BSP_LAN9252_IRQ_GPIO_Port) || !defined(BSP_LAN9252_IRQ_Pin)
 #error "LAN9252 IRQ pin is not configured. Define BSP_LAN9252_IRQ_GPIO_Port and BSP_LAN9252_IRQ_Pin."
 #endif
+#if (BSP_LAN9252_IRQ_Pin == 0U)
+#error "LAN9252 IRQ pin is invalid. BSP_LAN9252_IRQ_Pin must not be 0."
+#endif
 
 #if !defined(BSP_LAN9252_SYNC0_GPIO_Port) || !defined(BSP_LAN9252_SYNC0_Pin)
 #error "LAN9252 SYNC0 pin is not configured. Define BSP_LAN9252_SYNC0_GPIO_Port and BSP_LAN9252_SYNC0_Pin."
 #endif
+#if (BSP_LAN9252_SYNC0_Pin == 0U)
+#error "LAN9252 SYNC0 pin is invalid. BSP_LAN9252_SYNC0_Pin must not be 0."
+#endif
 
 #if !defined(BSP_LAN9252_SYNC1_GPIO_Port) || !defined(BSP_LAN9252_SYNC1_Pin)
 #error "LAN9252 SYNC1 pin is not configured. Define BSP_LAN9252_SYNC1_GPIO_Port and BSP_LAN9252_SYNC1_Pin."
+#endif
+#if (BSP_LAN9252_SYNC1_Pin == 0U)
+#error "LAN9252 SYNC1 pin is invalid. BSP_LAN9252_SYNC1_Pin must not be 0."
 #endif
 
 static bsp_lan9252_cfg_t g_cfg;
@@ -31,7 +40,10 @@ static bsp_lan9252_irq_cb_t g_sync1_cb = 0;
 
 void bsp_lan9252_init(const bsp_lan9252_cfg_t *cfg)
 {
-    if ((cfg == 0) || (cfg->hspi == 0) || (cfg->cs_port == 0) || (cfg->cs_pin == 0U))
+    if ((cfg == 0) || (cfg->hspi == 0) || (cfg->cs_port == 0) || (cfg->cs_pin == 0U)
+        || (cfg->irq_port == 0) || (cfg->irq_pin == 0U)
+        || (cfg->sync0_port == 0) || (cfg->sync0_pin == 0U)
+        || (cfg->sync1_port == 0) || (cfg->sync1_pin == 0U))
     {
         g_initialized = 0U;
         return;
