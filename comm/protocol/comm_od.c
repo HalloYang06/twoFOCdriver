@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "comm_ecat_if.h"
+#include "comm_od_core.h"
 #include "comm_modbus_regs.h"
 
 #define READ_FLOAT_REG(reg_base, field) \
@@ -63,6 +64,7 @@ static void comm_od_u32_to_words(uint32_t value, uint16_t *hi, uint16_t *lo)
 void comm_od_bind_axis0(axis_t *axis)
 {
     g_axis0 = axis;
+    comm_od_core_bind_axis0(axis);
 }
 
 comm_status_t comm_od_read_holding_word(uint16_t reg_addr, uint16_t *out_word)

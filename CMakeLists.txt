@@ -52,6 +52,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         comm/link/comm_eth.c
         comm/protocol/comm_modbus.c
         comm/protocol/comm_od.c
+        comm/protocol/comm_od_core.c
         comm/protocol/comm_can_ctrl.c
         comm/protocol/comm_ecat_if.c
         comm/Eth_stack/SPIDriver.c
