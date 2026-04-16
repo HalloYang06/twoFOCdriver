@@ -23,9 +23,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usart.h"
-#include "app_axis.h"
-#include "app_comm.h"
-#include "bsp_lan9252.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -492,73 +489,5 @@ void DMAMUX1_OVR_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-/* ==================== FOC鐢垫祦鐜浉鍏冲洖锟?(20kHz) ==================== */
-
-/**
- * @brief  ADC杞崲瀹屾垚鍥炶皟 - FOC鐢垫祦鐜富寰幆 (20kHz)
- * @note   鐢盩IM1 CH4瑙﹀彂锛岄锟?0kHz (50us鍛ㄦ湡)
- * @param  hadc: ADC鍙ユ焺
- * @retval None
- */
-void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    if (hadc == &hadc2)
-    {
-        uint16_t sample_ch3 = (uint16_t)HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_1);
-        uint16_t sample_ch15 = (uint16_t)HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_2);
-        uint16_t sample_ch8 = (uint16_t)HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_3);
-        App_AxisCurrentLoopIrqHandler(sample_ch15, sample_ch3, sample_ch8);
-    }
-}
-/**
- * @brief  ADC DMA鍗婂畬鎴愬洖锟?- FOC涓嶄娇鐢ㄦ鍥炶皟
- * @note   濡傛灉浣跨敤鍙岀紦鍐叉ā寮忥紝鍙互鍦ㄨ繖閲屽鐞嗗墠鍗婇儴鍒嗘暟锟?
- * @param  hadc: ADC鍙ユ焺
- * @retval None
- */
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    (void)hadc;
-}
-
-/* ==================== 缂栫爜鍣ㄧ浉鍏冲洖锟?==================== */
-/**
-  * @brief  GPIO澶栭儴涓柇鍥炶皟鍑芥暟
-  * @param  GPIO_Pin: 瑙﹀彂涓柇鐨凣PIO寮曡剼
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    bsp_lan9252_handle_exti(GPIO_Pin);
-}
-
-/**
- *@ UART鍙戦€佺粓绔洖璋冨嚱锟?
- * @param  huart: UART鍙ユ焺
- * @retval None
- */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-    App_CommUartTxCplt(huart);
-    App_AxisUartTxCplt(huart);
-}
-
-/**
- * @brief  UART鎺ユ敹瀹屾垚鍥炶皟锛圖MA婊★級
- */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    App_CommUartRxCplt(huart);
-    App_AxisUartRxCplt(huart);
-}
-
-/**
- * @brief  UART ReceiveToIdle鍥炶皟锛圛DLE妫€娴嬶紝澶氭懇宸濅富瑕佺敤杩欎釜锟?
- */
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-{
-    App_CommUartRxEvent(huart, Size);
-    App_AxisUartRxEvent(huart, Size);
-}
-
+/* 中断业务回调已迁移到 app/app_irq_dispatch.c，it.c 只保留 IRQ 入口。 */
 /* USER CODE END 1 */

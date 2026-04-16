@@ -69,6 +69,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         app/app_main.c
         app/app_axis.c
         app/app_comm.c
+        app/app_irq_dispatch.c
 
         Core/Src/spi.c
         Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c
