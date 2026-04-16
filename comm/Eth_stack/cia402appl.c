@@ -56,6 +56,7 @@ V4.30 : create file (state machine; handling state transition options; input fee
 
 
 #include "coeappl.h"
+#include "comm_ecat_if.h"
 
 #define _CiA402_
 #include "cia402appl.h"
@@ -1312,11 +1313,21 @@ void APPL_InputMapping(UINT16* pData)
         case 0:    //copy csp/csv TxPDO entries
             {
                 TCiA402PDO1A00 *pInputs = (TCiA402PDO1A00 *)pTmpData;
+                UINT16 status_word = LocalAxes[AxisIndex].Objects.objStatusWord;
+                INT32 position_actual = LocalAxes[AxisIndex].Objects.objPositionActualValue;
+                INT32 velocity_actual = LocalAxes[AxisIndex].Objects.objVelocityActualValue;
+                INT16 mode_display = LocalAxes[AxisIndex].Objects.objModesOfOperationDisplay;
+                INT16 torque_actual = LocalAxes[AxisIndex].Objects.objTorqueActualValue;
 
-                pInputs->ObjStatusWord = SWAPWORD(LocalAxes[AxisIndex].Objects.objStatusWord);
-                pInputs->ObjPositionActualValue = SWAPDWORD(LocalAxes[AxisIndex].Objects.objPositionActualValue);
-                pInputs->ObjVelocityActualValue = SWAPDWORD(LocalAxes[AxisIndex].Objects.objVelocityActualValue);
-                pInputs->ObjModesOfOperationDisplay = SWAPWORD((LocalAxes[AxisIndex].Objects.objModesOfOperationDisplay & 0x00FF));
+                if (AxisIndex == 0U)
+                {
+                    comm_ecat_if_fill_txpdo(&status_word, &position_actual, &velocity_actual, &mode_display, &torque_actual);
+                }
+
+                pInputs->ObjStatusWord = SWAPWORD(status_word);
+                pInputs->ObjPositionActualValue = SWAPDWORD(position_actual);
+                pInputs->ObjVelocityActualValue = SWAPDWORD(velocity_actual);
+                pInputs->ObjModesOfOperationDisplay = SWAPWORD((mode_display & 0x00FF));
 
                 /*shift pointer PDO mapping object following*/
                 if(j < (sTxPDOassign.u16SubIndex0 - 1))
@@ -1326,9 +1337,19 @@ void APPL_InputMapping(UINT16* pData)
         case 1://copy csp TxPDO entries
             {
                 TCiA402PDO1A01 *pInputs = (TCiA402PDO1A01 *)pTmpData;
+                UINT16 status_word = LocalAxes[AxisIndex].Objects.objStatusWord;
+                INT32 position_actual = LocalAxes[AxisIndex].Objects.objPositionActualValue;
+                INT32 velocity_actual = LocalAxes[AxisIndex].Objects.objVelocityActualValue;
+                INT16 mode_display = LocalAxes[AxisIndex].Objects.objModesOfOperationDisplay;
+                INT16 torque_actual = LocalAxes[AxisIndex].Objects.objTorqueActualValue;
 
-                pInputs->ObjStatusWord = SWAPWORD(LocalAxes[AxisIndex].Objects.objStatusWord);
-                pInputs->ObjPositionActualValue = SWAPDWORD(LocalAxes[AxisIndex].Objects.objPositionActualValue);
+                if (AxisIndex == 0U)
+                {
+                    comm_ecat_if_fill_txpdo(&status_word, &position_actual, &velocity_actual, &mode_display, &torque_actual);
+                }
+
+                pInputs->ObjStatusWord = SWAPWORD(status_word);
+                pInputs->ObjPositionActualValue = SWAPDWORD(position_actual);
 
                 /*shift pointer PDO mapping object following*/
                 if (j < (sTxPDOassign.u16SubIndex0 - 1))
@@ -1340,9 +1361,19 @@ void APPL_InputMapping(UINT16* pData)
         case 2://copy csv TxPDO entries
             {
                 TCiA402PDO1A02 *pInputs = (TCiA402PDO1A02 *)pTmpData;
+                UINT16 status_word = LocalAxes[AxisIndex].Objects.objStatusWord;
+                INT32 position_actual = LocalAxes[AxisIndex].Objects.objPositionActualValue;
+                INT32 velocity_actual = LocalAxes[AxisIndex].Objects.objVelocityActualValue;
+                INT16 mode_display = LocalAxes[AxisIndex].Objects.objModesOfOperationDisplay;
+                INT16 torque_actual = LocalAxes[AxisIndex].Objects.objTorqueActualValue;
 
-                pInputs->ObjStatusWord = SWAPWORD(LocalAxes[AxisIndex].Objects.objStatusWord);
-                pInputs->ObjPositionActualValue = SWAPDWORD(LocalAxes[AxisIndex].Objects.objPositionActualValue);
+                if (AxisIndex == 0U)
+                {
+                    comm_ecat_if_fill_txpdo(&status_word, &position_actual, &velocity_actual, &mode_display, &torque_actual);
+                }
+
+                pInputs->ObjStatusWord = SWAPWORD(status_word);
+                pInputs->ObjPositionActualValue = SWAPDWORD(position_actual);
             
                 /*shift pointer PDO mapping object following*/
                 if (j < (sTxPDOassign.u16SubIndex0 - 1))
@@ -1384,6 +1415,14 @@ void APPL_OutputMapping(UINT16* pData)
             LocalAxes[AxisIndex].Objects.objTargetVelocity    = SWAPDWORD(pOutputs->ObjTargetVelocity);
             LocalAxes[AxisIndex].Objects.objModesOfOperation = SWAPWORD((pOutputs->ObjModesOfOperation & 0x00FF));
 
+            if (AxisIndex == 0U)
+            {
+                comm_ecat_if_on_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
+                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
+                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
+                                      (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
+            }
+
             /*shift pointer PDO mapping object following*/
             if (j < (sRxPDOassign.u16SubIndex0 - 1))
             {
@@ -1398,6 +1437,14 @@ void APPL_OutputMapping(UINT16* pData)
             LocalAxes[AxisIndex].Objects.objControlWord = SWAPWORD(pOutputs->ObjControlWord);
             LocalAxes[AxisIndex].Objects.objTargetPosition = SWAPDWORD(pOutputs->ObjTargetPosition);
 
+            if (AxisIndex == 0U)
+            {
+                comm_ecat_if_on_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
+                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
+                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
+                                      (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
+            }
+
             /*shift pointer PDO mapping object following*/
             if (j < (sRxPDOassign.u16SubIndex0 - 1))
             {
@@ -1411,6 +1458,14 @@ void APPL_OutputMapping(UINT16* pData)
 
             LocalAxes[AxisIndex].Objects.objControlWord = SWAPWORD(pOutputs->ObjControlWord);
             LocalAxes[AxisIndex].Objects.objTargetVelocity    = SWAPDWORD(pOutputs->ObjTargetVelocity);
+
+            if (AxisIndex == 0U)
+            {
+                comm_ecat_if_on_rxpdo((UINT16)LocalAxes[AxisIndex].Objects.objControlWord,
+                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetPosition,
+                                      (INT32)LocalAxes[AxisIndex].Objects.objTargetVelocity,
+                                      (INT16)LocalAxes[AxisIndex].Objects.objModesOfOperation);
+            }
 
             /*shift pointer PDO mapping object following*/
             if (j < (sRxPDOassign.u16SubIndex0 - 1))

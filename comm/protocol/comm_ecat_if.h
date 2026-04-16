@@ -8,4 +8,15 @@ void comm_ecat_if_process(void);
 uint8_t comm_ecat_if_is_ready(void);
 uint8_t comm_ecat_if_is_healthy(void);
 
+void comm_ecat_if_on_rxpdo(uint16_t control_word,
+                           int32_t target_position,
+                           int32_t target_velocity,
+                           int16_t mode_of_operation);
+
+void comm_ecat_if_fill_txpdo(uint16_t *status_word,
+                             int32_t *actual_position,
+                             int32_t *actual_velocity,
+                             int16_t *mode_display,
+                             int16_t *torque_actual);
+
 #endif
