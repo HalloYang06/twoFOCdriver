@@ -114,19 +114,18 @@ static uint16_t comm_ecat_build_status_word(void)
 
 static void comm_ecat_update_feedback_to_cia402(void)
 {
-    uint16_t status_word = 0U;
-    int32_t actual_position = 0;
-    int32_t actual_velocity = 0;
-    int16_t mode_display = 0;
-    int16_t torque_actual = 0;
-
-    comm_ecat_if_fill_txpdo(&status_word, &actual_position, &actual_velocity, &mode_display, &torque_actual);
+    uint16_t status_word = comm_ecat_build_status_word();
+    int32_t actual_position = (int32_t)(g_axis0.position_mech_rad * COMM_ECAT_POS_SCALE);
+    int32_t actual_velocity = (int32_t)(g_axis0.speed_mech_rad_s * COMM_ECAT_VEL_SCALE);
+    int16_t mode_display = LocalAxes[0].Objects.objModesOfOperation;
+    int16_t torque_actual = (INT16)g_axis0.foc.i_dq.q;
 
     LocalAxes[0].Objects.objStatusWord = (INT16)status_word;
     LocalAxes[0].Objects.objPositionActualValue = actual_position;
     LocalAxes[0].Objects.objVelocityActualValue = actual_velocity;
     LocalAxes[0].Objects.objTorqueActualValue = torque_actual;
     LocalAxes[0].Objects.objModesOfOperationDisplay = mode_display;
+    comm_od_core_write_ecat_txpdo(status_word, actual_position, actual_velocity, mode_display, torque_actual);
 }
 
 static axis_mode_t comm_ecat_axis_mode_from_cia402(INT16 cia402_mode)
@@ -296,6 +295,7 @@ void comm_ecat_if_init(void)
     g_bad_health_samples = 0U;
     g_rxpdo_update_count = 0U;
     comm_od_core_clear_ecat_rxpdo();
+    comm_od_core_clear_ecat_txpdo();
     g_sync0_irq_seq = 0U;
     g_sync0_irq_seq_handled = 0U;
     g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
@@ -362,6 +362,7 @@ void comm_ecat_if_force_reinit(void)
     g_bad_health_samples = 0U;
     g_rxpdo_update_count = 0U;
     comm_od_core_clear_ecat_rxpdo();
+    comm_od_core_clear_ecat_txpdo();
     g_sync0_irq_seq = 0U;
     g_sync0_irq_seq_handled = 0U;
     g_last_al_status = 0U;
@@ -432,28 +433,31 @@ void comm_ecat_if_fill_txpdo(uint16_t *status_word,
                              int16_t *mode_display,
                              int16_t *torque_actual)
 {
+    comm_od_ecat_txpdo_t txpdo = {0};
+    const uint8_t has_snapshot = comm_od_core_read_ecat_txpdo(&txpdo);
+
     if (status_word != 0)
     {
-        *status_word = comm_ecat_build_status_word();
+        *status_word = (has_snapshot != 0U) ? txpdo.status_word : comm_ecat_build_status_word();
     }
 
     if (actual_position != 0)
     {
-        *actual_position = (int32_t)(g_axis0.position_mech_rad * COMM_ECAT_POS_SCALE);
+        *actual_position = (has_snapshot != 0U) ? txpdo.actual_position : (int32_t)(g_axis0.position_mech_rad * COMM_ECAT_POS_SCALE);
     }
 
     if (actual_velocity != 0)
     {
-        *actual_velocity = (int32_t)(g_axis0.speed_mech_rad_s * COMM_ECAT_VEL_SCALE);
+        *actual_velocity = (has_snapshot != 0U) ? txpdo.actual_velocity : (int32_t)(g_axis0.speed_mech_rad_s * COMM_ECAT_VEL_SCALE);
     }
 
     if (mode_display != 0)
     {
-        *mode_display = LocalAxes[0].Objects.objModesOfOperation;
+        *mode_display = (has_snapshot != 0U) ? txpdo.mode_display : LocalAxes[0].Objects.objModesOfOperation;
     }
 
     if (torque_actual != 0)
     {
-        *torque_actual = (INT16)g_axis0.foc.i_dq.q;
+        *torque_actual = (has_snapshot != 0U) ? txpdo.torque_actual : (INT16)g_axis0.foc.i_dq.q;
     }
 }

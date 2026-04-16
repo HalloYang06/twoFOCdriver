@@ -57,6 +57,7 @@ V4.30 : create file (state machine; handling state transition options; input fee
 
 #include "coeappl.h"
 #include "comm_ecat_if.h"
+#include "comm_od_core.h"
 
 #define _CiA402_
 #include "cia402appl.h"
@@ -1321,7 +1322,15 @@ void APPL_InputMapping(UINT16* pData)
 
                 if (AxisIndex == 0U)
                 {
-                    comm_ecat_if_fill_txpdo(&status_word, &position_actual, &velocity_actual, &mode_display, &torque_actual);
+                    comm_od_ecat_txpdo_t txpdo = {0};
+                    if (comm_od_core_read_ecat_txpdo(&txpdo) != 0U)
+                    {
+                        status_word = txpdo.status_word;
+                        position_actual = txpdo.actual_position;
+                        velocity_actual = txpdo.actual_velocity;
+                        mode_display = txpdo.mode_display;
+                        torque_actual = txpdo.torque_actual;
+                    }
                 }
 
                 pInputs->ObjStatusWord = SWAPWORD(status_word);
@@ -1345,7 +1354,15 @@ void APPL_InputMapping(UINT16* pData)
 
                 if (AxisIndex == 0U)
                 {
-                    comm_ecat_if_fill_txpdo(&status_word, &position_actual, &velocity_actual, &mode_display, &torque_actual);
+                    comm_od_ecat_txpdo_t txpdo = {0};
+                    if (comm_od_core_read_ecat_txpdo(&txpdo) != 0U)
+                    {
+                        status_word = txpdo.status_word;
+                        position_actual = txpdo.actual_position;
+                        velocity_actual = txpdo.actual_velocity;
+                        mode_display = txpdo.mode_display;
+                        torque_actual = txpdo.torque_actual;
+                    }
                 }
 
                 pInputs->ObjStatusWord = SWAPWORD(status_word);
@@ -1369,7 +1386,15 @@ void APPL_InputMapping(UINT16* pData)
 
                 if (AxisIndex == 0U)
                 {
-                    comm_ecat_if_fill_txpdo(&status_word, &position_actual, &velocity_actual, &mode_display, &torque_actual);
+                    comm_od_ecat_txpdo_t txpdo = {0};
+                    if (comm_od_core_read_ecat_txpdo(&txpdo) != 0U)
+                    {
+                        status_word = txpdo.status_word;
+                        position_actual = txpdo.actual_position;
+                        velocity_actual = txpdo.actual_velocity;
+                        mode_display = txpdo.mode_display;
+                        torque_actual = txpdo.torque_actual;
+                    }
                 }
 
                 pInputs->ObjStatusWord = SWAPWORD(status_word);
