@@ -11,6 +11,7 @@
 #include "esc.h"
 
 extern UINT16 CiA402_Init(void);
+extern void CiA402_DeallocateAxis(void);
 extern TCiA402Axis LocalAxes[MAX_AXES];
 
 #ifndef COMM_ECAT_POS_SCALE
@@ -54,12 +55,14 @@ static uint32_t g_recovery_failures = 0U;
 static uint32_t g_mainloop_cycles = 0U;
 static uint32_t g_axis_apply_cycles = 0U;
 static uint16_t g_last_al_status = 0U;
+static uint32_t g_reinit_divider = 0U;
 
 static uint8_t comm_ecat_stack_bootstrap(void)
 {
     UINT16 init_err;
     UINT16 cia402_err;
     UINT16 mapping_err;
+    uint8_t cia402_initialized = 0U;
 
     if (HW_Init() != 0U)
     {
@@ -77,10 +80,15 @@ static uint8_t comm_ecat_stack_bootstrap(void)
     {
         return 0U;
     }
+    cia402_initialized = 1U;
 
     mapping_err = APPL_GenerateMapping(&nPdInputSize, &nPdOutputSize);
     if (mapping_err != 0U)
     {
+        if (cia402_initialized != 0U)
+        {
+            CiA402_DeallocateAxis();
+        }
         return 0U;
     }
 
@@ -127,7 +135,7 @@ static void comm_ecat_update_feedback_to_cia402(void)
     LocalAxes[0].Objects.objPositionActualValue = actual_position;
     LocalAxes[0].Objects.objVelocityActualValue = actual_velocity;
     LocalAxes[0].Objects.objTorqueActualValue = torque_actual;
-    LocalAxes[0].Objects.objModesOfOperationDisplay = LocalAxes[0].Objects.objModesOfOperation;
+    LocalAxes[0].Objects.objModesOfOperationDisplay = mode_display;
 }
 
 static axis_mode_t comm_ecat_axis_mode_from_cia402(INT16 cia402_mode)
@@ -252,6 +260,8 @@ static void comm_ecat_health_poll(void)
     }
 
     g_recovery_attempts++;
+    bRunApplication = FALSE;
+    CiA402_DeallocateAxis();
 
     if (bsp_lan9252_is_initialized() == 0U)
     {
@@ -316,6 +326,7 @@ void comm_ecat_if_init(void)
     g_sync0_irq_seq = 0U;
     g_sync0_irq_seq_handled = 0U;
     g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
+    g_reinit_divider = 0U;
 }
 
 void comm_ecat_if_process(void)
@@ -324,6 +335,12 @@ void comm_ecat_if_process(void)
 
     if (!g_ecat_ready)
     {
+        g_reinit_divider++;
+        if (g_reinit_divider >= 1000U)
+        {
+            g_reinit_divider = 0U;
+            comm_ecat_if_init();
+        }
         return;
     }
 
@@ -356,6 +373,31 @@ uint8_t comm_ecat_if_is_ready(void)
 uint8_t comm_ecat_if_is_healthy(void)
 {
     return g_ecat_health_ok;
+}
+
+void comm_ecat_if_force_reinit(void)
+{
+    uint32_t irq_state = bsp_lan9252_irq_lock();
+
+    bRunApplication = FALSE;
+    g_ecat_ready = 0U;
+    g_ecat_failed = 0U;
+    g_ecat_health_ok = 0U;
+    g_last_control_word = 0U;
+    g_last_target_position = 0;
+    g_health_divider = 0U;
+    g_bad_health_samples = 0U;
+    g_rxpdo_seq = 0U;
+    g_rxpdo_shadow.control_word = 0U;
+    g_rxpdo_shadow.target_position = 0;
+    g_rxpdo_shadow.target_velocity = 0;
+    g_rxpdo_shadow.mode_of_operation = 0;
+    g_rxpdo_shadow.valid = 0U;
+    g_sync0_irq_seq = 0U;
+    g_sync0_irq_seq_handled = 0U;
+    g_last_al_status = 0U;
+
+    bsp_lan9252_irq_unlock(irq_state);
 }
 
 void comm_ecat_if_set_trigger_source(comm_ecat_trigger_source_t source)
