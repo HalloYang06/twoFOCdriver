@@ -46,6 +46,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "SPIDriver_port.h"
 #include "9252_HW.h"
 
+#define SPI_POLL_MAX_RETRY 10000U
+
 /*******************************************************************************
   Function:
 	UINT32 SPIReadDWord (UINT16 Address)
@@ -210,6 +212,7 @@ void SPIReadRegUsingCSR(UINT8 *ReadBuffer, UINT16 Address, UINT8 Count)
     UINT32_VAL param32_1 = {0};
     UINT8 i = 0;
     UINT16_VAL wAddr;
+    UINT32 retry;
     wAddr.Val = Address;
 
     param32_1.v[0] = wAddr.byte.LB;
@@ -219,11 +222,22 @@ void SPIReadRegUsingCSR(UINT8 *ReadBuffer, UINT16 Address, UINT8 Count)
 
     SPIWriteDWord (ESC_CSR_CMD_REG, param32_1.Val);
 
-    do
+    for (retry = 0U; retry < SPI_POLL_MAX_RETRY; retry++)
     {
         param32_1.Val = SPIReadDWord (ESC_CSR_CMD_REG);
-		
-    }while(param32_1.v[3] & ESC_CSR_BUSY);
+        if ((param32_1.v[3] & ESC_CSR_BUSY) == 0U)
+        {
+            break;
+        }
+    }
+    if (retry >= SPI_POLL_MAX_RETRY)
+    {
+        for (i = 0U; i < Count; i++)
+        {
+            ReadBuffer[i] = 0U;
+        }
+        return;
+    }
 
     param32_1.Val = SPIReadDWord (ESC_CSR_DATA_REG);
 
@@ -246,6 +260,7 @@ void SPIWriteRegUsingCSR( UINT8 *WriteBuffer, UINT16 Address, UINT8 Count)
     UINT32_VAL param32_1 = {0};
     UINT8 i = 0;
     UINT16_VAL wAddr;
+    UINT32 retry;
 
     for(i=0;i<Count;i++)
          param32_1.v[i] = WriteBuffer[i];
@@ -261,11 +276,14 @@ void SPIWriteRegUsingCSR( UINT8 *WriteBuffer, UINT16 Address, UINT8 Count)
     param32_1.v[3] = ESC_WRITE_BYTE;
 
     SPIWriteDWord (0x304, param32_1.Val);
-    do
+    for (retry = 0U; retry < SPI_POLL_MAX_RETRY; retry++)
     {
         param32_1.Val = SPIReadDWord (0x304);
-
-    }while(param32_1.v[3] & ESC_CSR_BUSY);
+        if ((param32_1.v[3] & ESC_CSR_BUSY) == 0U)
+        {
+            break;
+        }
+    }
 
     return;
 }
@@ -283,6 +301,7 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
     UINT8 i = 0,nlength, nBytePosition;
     UINT8 nReadSpaceAvblCount;
     UINT16 RefAddr = Address;
+    UINT32 retry;
 
 	/*Reset/Abort any previous commands.*/
     param32_1.Val = PRAM_RW_ABORT_MASK;                                                 
@@ -291,11 +310,18 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 
     /*The host should not modify this field unless the PRAM Read Busy
     (PRAM_READ_BUSY) bit is a 0.*/
-	do
+    for (retry = 0U; retry < SPI_POLL_MAX_RETRY; retry++)
     {
         param32_1.Val = SPIReadDWord (PRAM_READ_CMD_REG);
-
-    }while((param32_1.v[3] & PRAM_RW_BUSY_8B));
+        if ((param32_1.v[3] & PRAM_RW_BUSY_8B) == 0U)
+        {
+            break;
+        }
+    }
+    if (retry >= SPI_POLL_MAX_RETRY)
+    {
+        return;
+    }
     
     /*Write Address and Length Register (PRAM_READ_ADDR_LEN) with the
     starting UINT8 address and length) and Set PRAM Read Busy (PRAM_READ_BUSY) bit(-EtherCAT Process RAM Read Command Register)
@@ -308,11 +334,18 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 	SPIWriteBytes (PRAM_READ_ADDR_LEN_REG, (UINT8*)&param32_1.Val,8);   
 
     /*Read PRAM Read Data Available (PRAM_READ_AVAIL) bit is set*/
-    do
+    for (retry = 0U; retry < SPI_POLL_MAX_RETRY; retry++)
     {
         param32_1.Val = SPIReadDWord (PRAM_READ_CMD_REG);
-
-    }while(!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
+        if ((param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK) != 0U)
+        {
+            break;
+        }
+    }
+    if (retry >= SPI_POLL_MAX_RETRY)
+    {
+        return;
+    }
 
     nReadSpaceAvblCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
 
@@ -368,6 +401,7 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 {
     UINT64_VAL param32_1 = {0};
     UINT8 i = 0,nlength, nBytePosition,nWrtSpcAvlCount;
+    UINT32 retry;
 
     /*Reset or Abort any previous commands.*/
     param32_1.Val = PRAM_RW_ABORT_MASK;                                                
@@ -376,11 +410,18 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 
     /*Make sure there is no previous write is pending
     (PRAM Write Busy) bit is a 0 */
-    do
+    for (retry = 0U; retry < SPI_POLL_MAX_RETRY; retry++)
     {
         param32_1.Val = SPIReadDWord (PRAM_WRITE_CMD_REG);
-
-    }while((param32_1.v[3] & PRAM_RW_BUSY_8B));
+        if ((param32_1.v[3] & PRAM_RW_BUSY_8B) == 0U)
+        {
+            break;
+        }
+    }
+    if (retry >= SPI_POLL_MAX_RETRY)
+    {
+        return;
+    }
 
     /*Write Address and Length Register (ECAT_PRAM_WR_ADDR_LEN) with the
     starting UINT8 address and length) and write to the EtherCAT Process RAM Write Command Register (ECAT_PRAM_WR_CMD) with the  PRAM Write Busy
@@ -393,11 +434,18 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
    SPIWriteBytes (PRAM_WRITE_ADDR_LEN_REG, (UINT8*)&param32_1.Val,8);
 
    /*Read PRAM write Data Available (PRAM_READ_AVAIL) bit is set*/
-	do
+    for (retry = 0U; retry < SPI_POLL_MAX_RETRY; retry++)
     {
        param32_1.Val = SPIReadDWord (PRAM_WRITE_CMD_REG);
-
-    }while(!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
+        if ((param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK) != 0U)
+        {
+            break;
+        }
+    }
+    if (retry >= SPI_POLL_MAX_RETRY)
+    {
+        return;
+    }
 
     /*Check write data available count*/
     nWrtSpcAvlCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
