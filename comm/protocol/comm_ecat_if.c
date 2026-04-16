@@ -1,5 +1,7 @@
 #include "comm_ecat_if.h"
 
+#include <string.h>
+
 #include "9252_HW.h"
 #include "applInterface.h"
 #include "app_axis.h"
@@ -44,6 +46,14 @@ static volatile comm_ecat_rxpdo_shadow_t g_rxpdo_shadow = {0};
 static volatile uint32_t g_sync0_irq_seq = 0U;
 static uint32_t g_sync0_irq_seq_handled = 0U;
 static comm_ecat_trigger_source_t g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
+static uint32_t g_init_attempts = 0U;
+static uint32_t g_init_failures = 0U;
+static uint32_t g_recovery_attempts = 0U;
+static uint32_t g_recovery_successes = 0U;
+static uint32_t g_recovery_failures = 0U;
+static uint32_t g_mainloop_cycles = 0U;
+static uint32_t g_axis_apply_cycles = 0U;
+static uint16_t g_last_al_status = 0U;
 
 static uint8_t comm_ecat_stack_bootstrap(void)
 {
@@ -221,6 +231,7 @@ static void comm_ecat_health_poll(void)
 
     g_health_divider = 0U;
     HW_EscReadWord(al_status, ESC_AL_STATUS_OFFSET);
+    g_last_al_status = al_status;
 
     if ((al_status == 0x0000U) || (al_status == 0xFFFFU))
     {
@@ -240,6 +251,8 @@ static void comm_ecat_health_poll(void)
         return;
     }
 
+    g_recovery_attempts++;
+
     if (bsp_lan9252_is_initialized() == 0U)
     {
         bsp_lan9252_init_default();
@@ -249,9 +262,11 @@ static void comm_ecat_health_poll(void)
     {
         g_bad_health_samples = 0U;
         g_ecat_health_ok = 1U;
+        g_recovery_successes++;
         return;
     }
 
+    g_recovery_failures++;
     g_ecat_health_ok = 0U;
 }
 
@@ -262,6 +277,8 @@ void comm_ecat_if_init(void)
         return;
     }
 
+    g_init_attempts++;
+
     if (bsp_lan9252_is_initialized() == 0U)
     {
         bsp_lan9252_init_default();
@@ -271,6 +288,7 @@ void comm_ecat_if_init(void)
     {
         g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
+        g_init_failures++;
         return;
     }
 
@@ -278,10 +296,12 @@ void comm_ecat_if_init(void)
     {
         g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
+        g_init_failures++;
         return;
     }
 
     g_ecat_ready = 1U;
+    g_ecat_failed = 0U;
     g_ecat_health_ok = 1U;
     g_last_control_word = 0U;
     g_last_target_position = 0;
@@ -317,10 +337,12 @@ void comm_ecat_if_process(void)
         g_sync0_irq_seq_handled = g_sync0_irq_seq;
     }
 
+    g_mainloop_cycles++;
     comm_ecat_update_feedback_to_cia402();
     MainLoop();
     if (apply_axis_cmd != 0U)
     {
+        g_axis_apply_cycles++;
         comm_ecat_apply_cia402_commands();
     }
     comm_ecat_health_poll();
@@ -344,6 +366,40 @@ void comm_ecat_if_set_trigger_source(comm_ecat_trigger_source_t source)
 comm_ecat_trigger_source_t comm_ecat_if_get_trigger_source(void)
 {
     return g_trigger_source;
+}
+
+void comm_ecat_if_get_diag(comm_ecat_diag_t *diag)
+{
+    uint32_t irq_state;
+    uint32_t rxpdo_seq;
+
+    if (diag == 0)
+    {
+        return;
+    }
+
+    irq_state = bsp_lan9252_irq_lock();
+
+    memset(diag, 0, sizeof(*diag));
+    diag->ready = g_ecat_ready;
+    diag->healthy = g_ecat_health_ok;
+    diag->failed = g_ecat_failed;
+    diag->trigger_source = (uint8_t)g_trigger_source;
+    diag->bad_health_samples = g_bad_health_samples;
+    diag->init_attempts = g_init_attempts;
+    diag->init_failures = g_init_failures;
+    diag->recovery_attempts = g_recovery_attempts;
+    diag->recovery_successes = g_recovery_successes;
+    diag->recovery_failures = g_recovery_failures;
+    diag->mainloop_cycles = g_mainloop_cycles;
+    diag->axis_apply_cycles = g_axis_apply_cycles;
+    diag->sync0_irq_count = g_sync0_irq_seq;
+    diag->sync0_irq_handled_count = g_sync0_irq_seq_handled;
+    rxpdo_seq = g_rxpdo_seq;
+    diag->rxpdo_update_count = (rxpdo_seq >> 1U);
+    diag->last_al_status = g_last_al_status;
+
+    bsp_lan9252_irq_unlock(irq_state);
 }
 
 void comm_ecat_if_on_sync0_irq(void)
