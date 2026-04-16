@@ -296,7 +296,7 @@ void comm_ecat_if_init(void)
 
 void comm_ecat_if_process(void)
 {
-    uint8_t run_now = 0U;
+    uint8_t apply_axis_cmd = 0U;
 
     if (!g_ecat_ready)
     {
@@ -305,22 +305,20 @@ void comm_ecat_if_process(void)
 
     if (g_trigger_source == COMM_ECAT_TRIGGER_TIM7)
     {
-        run_now = 1U;
+        apply_axis_cmd = 1U;
     }
     else if (g_sync0_irq_seq_handled != g_sync0_irq_seq)
     {
-        run_now = 1U;
+        apply_axis_cmd = 1U;
         g_sync0_irq_seq_handled = g_sync0_irq_seq;
-    }
-
-    if (run_now == 0U)
-    {
-        return;
     }
 
     comm_ecat_update_feedback_to_cia402();
     MainLoop();
-    comm_ecat_apply_cia402_commands();
+    if (apply_axis_cmd != 0U)
+    {
+        comm_ecat_apply_cia402_commands();
+    }
     comm_ecat_health_poll();
 }
 
