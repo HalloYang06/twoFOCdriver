@@ -56,6 +56,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         comm/protocol/comm_ecat_if.c
         comm/Eth_stack/SPIDriver.c
         comm/Eth_stack/SPIDriver_port.c
+        comm/Eth_stack/lan9252_port_stm32h7.c
         comm/Eth_stack/9252_HW.c
         comm/Eth_stack/ecatslv.c
         comm/Eth_stack/ecatappl.c
@@ -78,6 +79,7 @@ add_executable(${CMAKE_PROJECT_NAME}
 set_source_files_properties(
         comm/Eth_stack/SPIDriver.c
         comm/Eth_stack/SPIDriver_port.c
+        comm/Eth_stack/lan9252_port_stm32h7.c
         comm/Eth_stack/9252_HW.c
         comm/Eth_stack/ecatslv.c
         comm/Eth_stack/ecatappl.c
