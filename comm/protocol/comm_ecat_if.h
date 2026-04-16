@@ -36,6 +36,7 @@ void comm_ecat_if_init(void);
 void comm_ecat_if_process(void);
 uint8_t comm_ecat_if_is_ready(void);
 uint8_t comm_ecat_if_is_healthy(void);
+void comm_ecat_if_force_reinit(void);
 void comm_ecat_if_set_trigger_source(comm_ecat_trigger_source_t source);
 comm_ecat_trigger_source_t comm_ecat_if_get_trigger_source(void);
 void comm_ecat_if_get_diag(comm_ecat_diag_t *diag);

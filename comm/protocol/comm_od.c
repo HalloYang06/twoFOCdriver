@@ -213,6 +213,13 @@ comm_status_t comm_od_write_single(uint16_t reg_addr, uint16_t value)
             }
             return COMM_OK;
 
+        case COMM_MODBUS_REG_CMD_ECAT_REINIT:
+            if (value != 0U)
+            {
+                comm_ecat_if_force_reinit();
+            }
+            return COMM_OK;
+
         case COMM_MODBUS_REG_HOLD_CTRL_MODE:
             irq_state = comm_od_irq_lock();
             axis_set_mode(ax, (axis_mode_t)value);
