@@ -152,6 +152,7 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 /*ECATCHANGE_START(V5.13) CIA402 3*/
 /*ECATCHANGE_END(V5.13) CIA402 3*/
 #include "cia402appl.h"
+#include "comm_ecat_if.h"
 
 
 
@@ -575,6 +576,7 @@ void PDI_Isr(void)
 void Sync0_Isr(void)
 {
      Sync0WdCounter = 0;
+     comm_ecat_if_on_sync0_irq();
 
     if(bDcSyncActive)
     {
