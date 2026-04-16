@@ -10,28 +10,16 @@
 #define BSP_LAN9252_CS_Pin GPIO_PIN_4
 #endif
 
-#ifndef BSP_LAN9252_IRQ_GPIO_Port
-#define BSP_LAN9252_IRQ_GPIO_Port ((GPIO_TypeDef *)0)
+#if !defined(BSP_LAN9252_IRQ_GPIO_Port) || !defined(BSP_LAN9252_IRQ_Pin)
+#error "LAN9252 IRQ pin is not configured. Define BSP_LAN9252_IRQ_GPIO_Port and BSP_LAN9252_IRQ_Pin."
 #endif
 
-#ifndef BSP_LAN9252_IRQ_Pin
-#define BSP_LAN9252_IRQ_Pin 0U
+#if !defined(BSP_LAN9252_SYNC0_GPIO_Port) || !defined(BSP_LAN9252_SYNC0_Pin)
+#error "LAN9252 SYNC0 pin is not configured. Define BSP_LAN9252_SYNC0_GPIO_Port and BSP_LAN9252_SYNC0_Pin."
 #endif
 
-#ifndef BSP_LAN9252_SYNC0_GPIO_Port
-#define BSP_LAN9252_SYNC0_GPIO_Port ((GPIO_TypeDef *)0)
-#endif
-
-#ifndef BSP_LAN9252_SYNC0_Pin
-#define BSP_LAN9252_SYNC0_Pin 0U
-#endif
-
-#ifndef BSP_LAN9252_SYNC1_GPIO_Port
-#define BSP_LAN9252_SYNC1_GPIO_Port ((GPIO_TypeDef *)0)
-#endif
-
-#ifndef BSP_LAN9252_SYNC1_Pin
-#define BSP_LAN9252_SYNC1_Pin 0U
+#if !defined(BSP_LAN9252_SYNC1_GPIO_Port) || !defined(BSP_LAN9252_SYNC1_Pin)
+#error "LAN9252 SYNC1 pin is not configured. Define BSP_LAN9252_SYNC1_GPIO_Port and BSP_LAN9252_SYNC1_Pin."
 #endif
 
 static bsp_lan9252_cfg_t g_cfg;
