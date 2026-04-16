@@ -153,6 +153,7 @@ static void ISR_GetInterruptRegister(void)
 #define LAN9252_CSR_INT_CONF            0x54
 #define LAN9252_CSR_INT_EN              0x5C
 #define LAN9252_CSR_INT_STS             0x58
+#define LAN9252_INIT_MAX_POLL           10000U
 
 /*******************************************************************************
   Function:
@@ -173,21 +174,40 @@ UINT8 LAN9252_Init(void)
 
     UINT16 intMask;
     UINT32 data;
+    UINT32 retry;
     
     //Read BYTE-ORDER register 0x64.
-    do
+    for (retry = 0U; retry < LAN9252_INIT_MAX_POLL; retry++)
     {
         data = PDIReadLAN9252DirectReg( LAN9252_BYTE_ORDER_REG);
-    }while(0x87654321 != data);
+        if (0x87654321U == data)
+        {
+            break;
+        }
+    }
+
+    if (0x87654321U != data)
+    {
+        return 1U;
+    }
     
-    do
+    for (retry = 0U; retry < LAN9252_INIT_MAX_POLL; retry++)
     {
         intMask = 0x93;
         HW_EscWriteWord(intMask, ESC_AL_EVENTMASK_OFFSET);
        
         intMask = 0;
         HW_EscReadWord(intMask, ESC_AL_EVENTMASK_OFFSET);
-    } while (intMask != 0x93);
+        if (intMask == 0x93U)
+        {
+            break;
+        }
+    }
+
+    if (intMask != 0x93U)
+    {
+        return 2U;
+    }
 
    
     //IRQ enable,IRQ polarity, IRQ buffer type in Interrupt Configuration register.
@@ -216,7 +236,7 @@ UINT8 LAN9252_Init(void)
     /* enable all interrupts */
     PDI_Enable_Global_interrupt();
    
-    return 0;
+    return 0U;
 
 }
 

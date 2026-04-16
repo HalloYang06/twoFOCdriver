@@ -45,6 +45,39 @@ static volatile uint32_t g_sync0_irq_seq = 0U;
 static uint32_t g_sync0_irq_seq_handled = 0U;
 static comm_ecat_trigger_source_t g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
 
+static uint8_t comm_ecat_stack_bootstrap(void)
+{
+    UINT16 init_err;
+    UINT16 cia402_err;
+    UINT16 mapping_err;
+
+    if (HW_Init() != 0U)
+    {
+        return 0U;
+    }
+
+    init_err = MainInit();
+    if (init_err != 0U)
+    {
+        return 0U;
+    }
+
+    cia402_err = CiA402_Init();
+    if (cia402_err != 0U)
+    {
+        return 0U;
+    }
+
+    mapping_err = APPL_GenerateMapping(&nPdInputSize, &nPdOutputSize);
+    if (mapping_err != 0U)
+    {
+        return 0U;
+    }
+
+    bRunApplication = TRUE;
+    return 1U;
+}
+
 static uint16_t comm_ecat_build_status_word(void)
 {
     uint16_t status = 0U;
@@ -201,15 +234,29 @@ static void comm_ecat_health_poll(void)
         g_bad_health_samples = 0U;
     }
 
-    g_ecat_health_ok = (g_bad_health_samples < 3U) ? 1U : 0U;
+    if (g_bad_health_samples < 3U)
+    {
+        g_ecat_health_ok = 1U;
+        return;
+    }
+
+    if (bsp_lan9252_is_initialized() == 0U)
+    {
+        bsp_lan9252_init_default();
+    }
+
+    if ((bsp_lan9252_is_initialized() != 0U) && (comm_ecat_stack_bootstrap() != 0U))
+    {
+        g_bad_health_samples = 0U;
+        g_ecat_health_ok = 1U;
+        return;
+    }
+
+    g_ecat_health_ok = 0U;
 }
 
 void comm_ecat_if_init(void)
 {
-    UINT16 init_err;
-    UINT16 cia402_err;
-    UINT16 mapping_err;
-
     if (g_ecat_ready || g_ecat_failed)
     {
         return;
@@ -223,38 +270,13 @@ void comm_ecat_if_init(void)
         return;
     }
 
-    if (HW_Init() != 0U)
+    if (comm_ecat_stack_bootstrap() == 0U)
     {
         g_ecat_health_ok = 0U;
         g_ecat_failed = 1U;
         return;
     }
 
-    init_err = MainInit();
-    if (init_err != 0U)
-    {
-        g_ecat_health_ok = 0U;
-        g_ecat_failed = 1U;
-        return;
-    }
-
-    cia402_err = CiA402_Init();
-    if (cia402_err != 0U)
-    {
-        g_ecat_health_ok = 0U;
-        g_ecat_failed = 1U;
-        return;
-    }
-
-    mapping_err = APPL_GenerateMapping(&nPdInputSize, &nPdOutputSize);
-    if (mapping_err != 0U)
-    {
-        g_ecat_health_ok = 0U;
-        g_ecat_failed = 1U;
-        return;
-    }
-
-    bRunApplication = TRUE;
     g_ecat_ready = 1U;
     g_ecat_health_ok = 1U;
     g_last_control_word = 0U;
