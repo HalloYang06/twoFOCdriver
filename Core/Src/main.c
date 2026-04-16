@@ -23,6 +23,7 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "memorymap.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -114,6 +115,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_FDCAN1_Init();
   MX_USART3_UART_Init();
+  MX_SPI3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   /* 新架构接管初始化：CubeMX 负责外设，业务由 app 层装配。 */
   App_MainInit();
