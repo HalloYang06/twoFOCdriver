@@ -37,7 +37,7 @@ EL9800_HW: Shall be set if the Slave code is executed on the PIC mounted on the 
 This settings should also be enabled if the ESC is connected via a serial interface and no specific hardware access files are avilable yet.<br>
 NOTE: The PDI type needs also to be configured in the "ESC_CONFIG_DATA". */
 #ifndef EL9800_HW
-#define EL9800_HW                                 1 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
+#define EL9800_HW                                 0 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
 #endif
 
 /** 
@@ -65,13 +65,13 @@ from Texas Instruments) */
 /** 
 CONTROLLER_16BIT: Shall be set if the host controller is a 16Bit architecture */
 #ifndef CONTROLLER_16BIT
-#define CONTROLLER_16BIT                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
+#define CONTROLLER_16BIT                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
 #endif
 
 /** 
 CONTROLLER_32BIT: Shall be set if the host controller is a 32Bit architecture */
 #ifndef CONTROLLER_32BIT
-#define CONTROLLER_32BIT                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
+#define CONTROLLER_32BIT                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
 #endif
 
 /** 
@@ -91,7 +91,7 @@ This processor is mounted on the Beckhoff Slave Evaluation Board (Hardware versi
 _PIC24: Microchip PIC24HJ128GP306 Specific Code <br>
 This processor is mounted on the Beckhoff Slave Evaluation Board (Hardware version up to EL9800_4A). */
 #ifndef _PIC24
-#define _PIC24                                    1 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
+#define _PIC24                                    0 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
 #endif
 
 /** 
@@ -240,7 +240,7 @@ BOOTLOADER_SAMPLE: Select this define to enable a small footprint application wh
 USE_DEFAULT_MAIN: Set to 1 if the main function of a default application shall be used.<br>
 Otherwise the Init functions and the mainloop handler shall be called for a user specific function (see ET9300 Application Note for further details https://www.beckhoff.com/de-de/support/downloadfinder/technische-dokumentationen/?q=ET1100). */
 #ifndef USE_DEFAULT_MAIN
-#define USE_DEFAULT_MAIN                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
+#define USE_DEFAULT_MAIN                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.5.2.0)!
 #endif
 
 /** 
@@ -760,13 +760,13 @@ if the microcontroller does not support different memory types, VARMEM shall be 
 /** 
 MEM_ADDR: Type to access local memory addresses */
 #ifndef MEM_ADDR
-#define MEM_ADDR                                  UINT16
+#define MEM_ADDR                                  UINT8
 #endif
 
 /** 
 GET_MEM_SIZE(ByteSize): Round up the byte size to next matching memory boundary depending on "MEM_ADDR" */
 #ifndef GET_MEM_SIZE
-#define GET_MEM_SIZE(ByteSize)                    (((ByteSize)+1) >> 1)
+#define GET_MEM_SIZE(ByteSize)                    (ByteSize)
 #endif
 
 /** 

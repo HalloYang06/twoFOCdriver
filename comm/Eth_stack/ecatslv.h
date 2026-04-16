@@ -45,7 +45,7 @@ V5.01 : Start file change log
 
 #include "ecat_def.h"
 
-#include "el9800hw.h"
+#include "9252_HW.h"
 
 #ifndef _ECATSLV_H_
 #define _ECATSLV_H_

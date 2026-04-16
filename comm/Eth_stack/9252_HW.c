@@ -63,6 +63,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #define    _9252_HW_ 0
 
 #include "ecatappl.h"
+#include "SPIDriver.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -162,7 +163,11 @@ static void ISR_GetInterruptRegister(void)
 
   Description:
   *****************************************************************************/
-  
+UINT8 HW_Init(void)
+{
+    return LAN9252_Init();
+}
+
 UINT8 LAN9252_Init(void)
 {
 
@@ -654,6 +659,12 @@ TSYNCMAN ESCMEM * HW_GetSyncMan(UINT8 channel)
     HW_EscRead( (MEM_ADDR *)&TmpSyncMan, ESC_SYNCMAN_REG_OFFSET + (channel * SIZEOF_SM_REGISTER), SIZEOF_SM_REGISTER );
 
     return &TmpSyncMan;
+}
+
+void HW_SetLed(UINT8 RunLed,UINT8 ErrLed)
+{
+    (void)RunLed;
+    (void)ErrLed;
 }
 
 

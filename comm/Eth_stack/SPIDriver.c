@@ -42,7 +42,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
  *******************************************************************************/
  
-#include "PIC32SPIDriver.h"
+#include "SPIDriver.h"
+#include "SPIDriver_port.h"
 #include "9252_HW.h"
 
 /*******************************************************************************

@@ -35,7 +35,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         BSP/bsp_tamagawa_uart.c
         BSP/bsp_uart.c
         BSP/bsp_can.c
-        BSP/bsp_eth.c
+        BSP/bsp_lan9252.c
 
         libraries/control/pid.c
         libraries/math/mc_math.c
@@ -51,12 +51,43 @@ add_executable(${CMAKE_PROJECT_NAME}
         comm/link/comm_can.c
         comm/link/comm_eth.c
         comm/protocol/comm_modbus.c
+        comm/protocol/comm_od.c
         comm/protocol/comm_can_ctrl.c
         comm/protocol/comm_ecat_if.c
+        comm/Eth_stack/SPIDriver.c
+        comm/Eth_stack/SPIDriver_port.c
+        comm/Eth_stack/9252_HW.c
+        comm/Eth_stack/ecatslv.c
+        comm/Eth_stack/ecatappl.c
+        comm/Eth_stack/coeappl.c
+        comm/Eth_stack/ecatcoe.c
+        comm/Eth_stack/mailbox.c
+        comm/Eth_stack/sdoserv.c
+        comm/Eth_stack/objdef.c
+        comm/Eth_stack/cia402appl.c
 
         app/app_main.c
         app/app_axis.c
         app/app_comm.c
+
+        Core/Src/spi.c
+        Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c
+        Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c
+)
+
+set_source_files_properties(
+        comm/Eth_stack/SPIDriver.c
+        comm/Eth_stack/SPIDriver_port.c
+        comm/Eth_stack/9252_HW.c
+        comm/Eth_stack/ecatslv.c
+        comm/Eth_stack/ecatappl.c
+        comm/Eth_stack/coeappl.c
+        comm/Eth_stack/ecatcoe.c
+        comm/Eth_stack/mailbox.c
+        comm/Eth_stack/sdoserv.c
+        comm/Eth_stack/objdef.c
+        comm/Eth_stack/cia402appl.c
+        PROPERTIES COMPILE_OPTIONS "-Os"
 )
 
 add_subdirectory(cmake/stm32cubemx)
@@ -86,6 +117,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_SOURCE_DIR}/comm/debug
         ${CMAKE_SOURCE_DIR}/comm/link
         ${CMAKE_SOURCE_DIR}/comm/protocol
+        ${CMAKE_SOURCE_DIR}/comm/Eth_stack
         ${CMAKE_SOURCE_DIR}/app
 )
 
@@ -100,6 +132,10 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
 )
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Os)
+endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx

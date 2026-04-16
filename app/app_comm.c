@@ -3,6 +3,7 @@
 #include "app_axis.h"
 #include "bsp_uart.h"
 #include "comm_modbus.h"
+#include "comm_ecat_if.h"
 #include "comm_vofa.h"
 #include "usart.h"
 
@@ -14,6 +15,7 @@ void App_CommInit(void)
     bsp_uart_comm_bind(&huart3);
     comm_modbus_bind_axis0(&g_axis0);
     comm_modbus_init();
+    comm_ecat_if_init();
     comm_vofa_init(&huart4);
 }
 
@@ -37,6 +39,7 @@ void App_CommTick(void)
     }
 
     comm_modbus_process();
+    comm_ecat_if_process();
 }
 
 void App_CommUartTxCplt(UART_HandleTypeDef *huart)

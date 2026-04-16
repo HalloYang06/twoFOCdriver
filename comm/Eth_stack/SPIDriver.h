@@ -54,6 +54,8 @@
 #ifndef SPIDRIVER_H
 #define	SPIDRIVER_H
 
+#include "ecat_def.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -109,9 +111,15 @@ extern "C" {
     void SPIWriteRegUsingCSR( UINT8 *WriteBuffer, UINT16 Address, UINT8 Count);
 	void SPIWriteDWord (UINT16 Address, UINT32 Val);
 	UINT32 SPIReadDWord (UINT16 Address);
-    void SPIWriteBurstMode (UINT32 Val);
+	void SPIWriteBurstMode (UINT32 Val);
     UINT32 SPIReadBurstMode ();
     void SPISendAddr (UINT16 Address);
+
+    void PDIReadReg(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count);
+    void PDIWriteReg(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count);
+    UINT32 PDIReadLAN9252DirectReg(UINT16 Address);
+    void PDIWriteLAN9252DirectReg(UINT32 Val, UINT16 Address);
+    void PDI_Init(void);
     
     
 #ifdef	__cplusplus

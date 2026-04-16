@@ -33,6 +33,7 @@
 #include "app_main.h"
 #include "app_axis.h"
 #include "app_comm.h"
+#include "bsp_lan9252.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -265,6 +266,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   if (htim == &htim7)
   {
+    bsp_lan9252_on_1ms_tick();
     App_AxisSlowLoopTick();
     App_CommTick();
   }

@@ -1447,6 +1447,7 @@ void APPL_Application(void)
  \brief    This is the main function
 
 *////////////////////////////////////////////////////////////////////////////////////////
+#if USE_DEFAULT_MAIN
 int main(void)
 {
     /* initialize the Hardware and the EtherCAT Slave Controller */
@@ -1471,6 +1472,7 @@ int main(void)
     HW_Release();
     return 0;
 }
+#endif
 
 /** @} */
 

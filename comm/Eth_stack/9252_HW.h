@@ -159,6 +159,7 @@ PROTO volatile unsigned int restore_intsts;
 ///////////////////////////////////////////////////////////////////////////////
 // Global functions prototype
 
+PROTO UINT8 HW_Init(void);
 PROTO UINT8 LAN9252_Init(void);
 PROTO void HW_Release(void);
 
@@ -184,6 +185,10 @@ PROTO void PDI_ClearTimer();
 
 PROTO void PDI_Restore_Global_Interrupt(UINT32 int_sts);
 PROTO UINT32 PDI_Disable_Global_Interrupt();
+PROTO void PDI_Enable_Global_interrupt(void);
+PROTO void PDI_IRQ_Interrupt(void);
+PROTO void PDI_Timer_Interrupt(void);
+PROTO void PDI_Init_SYNC_Interrupts(void);
 
 #undef    PROTO
 
