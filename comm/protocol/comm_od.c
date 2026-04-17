@@ -265,63 +265,43 @@ comm_status_t comm_od_write_multi_words(uint16_t reg_addr, const uint16_t *words
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_AXIS0_TARGET_SPEED:
-            irq_state = comm_od_irq_lock();
             axis_set_velocity_ref(ax, value);
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_IQ_REF:
-            irq_state = comm_od_irq_lock();
             axis_set_current_ref(ax, value);
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_SPEED_KP:
-            irq_state = comm_od_irq_lock();
             ax->foc.pid_velocity.kp = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_SPEED_KI:
-            irq_state = comm_od_irq_lock();
             ax->foc.pid_velocity.ki = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_POS_KP:
-            irq_state = comm_od_irq_lock();
             ax->pid_position.kp = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_POS_KI:
-            irq_state = comm_od_irq_lock();
             ax->pid_position.ki = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_IQ_KP:
-            irq_state = comm_od_irq_lock();
             ax->foc.pid_iq.kp = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_IQ_KI:
-            irq_state = comm_od_irq_lock();
             ax->foc.pid_iq.ki = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_ID_KP:
-            irq_state = comm_od_irq_lock();
             ax->foc.pid_id.kp = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_ID_KI:
-            irq_state = comm_od_irq_lock();
             ax->foc.pid_id.ki = value;
-            comm_od_irq_unlock(irq_state);
             return COMM_OK;
 
         default:
