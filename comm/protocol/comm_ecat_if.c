@@ -35,7 +35,7 @@ static int32_t g_last_target_position = 0;
 static uint32_t g_health_divider = 0U;
 static uint8_t g_bad_health_samples = 0U;
 static volatile uint32_t g_sync0_irq_seq = 0U;
-static uint32_t g_sync0_irq_seq_handled = 0U;
+static volatile uint32_t g_sync0_irq_seq_handled = 0U;
 static comm_ecat_trigger_source_t g_trigger_source = COMM_ECAT_TRIGGER_TIM7;
 static uint32_t g_init_attempts = 0U;
 static uint32_t g_init_failures = 0U;
@@ -413,6 +413,13 @@ void comm_ecat_if_on_sync0_irq(void)
 {
     g_sync0_irq_seq++;
     App_AxisSync0Tick();
+
+    if ((g_trigger_source == COMM_ECAT_TRIGGER_SYNC0) && (g_ecat_ready != 0U))
+    {
+        g_axis_apply_cycles++;
+        comm_ecat_apply_cia402_commands();
+        g_sync0_irq_seq_handled = g_sync0_irq_seq;
+    }
 }
 
 void comm_ecat_if_fill_txpdo(uint16_t *status_word,
