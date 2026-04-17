@@ -47,6 +47,12 @@ static uint32_t g_axis_apply_cycles = 0U;
 static uint16_t g_last_al_status = 0U;
 static uint32_t g_reinit_divider = 0U;
 
+static void comm_ecat_if_fill_txpdo(uint16_t *status_word,
+                                    int32_t *actual_position,
+                                    int32_t *actual_velocity,
+                                    int16_t *mode_display,
+                                    int16_t *torque_actual);
+
 static uint8_t comm_ecat_stack_bootstrap(void)
 {
     UINT16 init_err;
@@ -422,11 +428,11 @@ void comm_ecat_if_on_sync0_irq(void)
     }
 }
 
-void comm_ecat_if_fill_txpdo(uint16_t *status_word,
-                             int32_t *actual_position,
-                             int32_t *actual_velocity,
-                             int16_t *mode_display,
-                             int16_t *torque_actual)
+static void comm_ecat_if_fill_txpdo(uint16_t *status_word,
+                                    int32_t *actual_position,
+                                    int32_t *actual_velocity,
+                                    int16_t *mode_display,
+                                    int16_t *torque_actual)
 {
     comm_od_ecat_txpdo_t txpdo = {0};
     const uint8_t has_snapshot = comm_od_core_read_ecat_txpdo(&txpdo);
