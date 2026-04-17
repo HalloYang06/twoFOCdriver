@@ -1302,6 +1302,8 @@ void APPL_InputMapping(UINT16* pData)
     UINT16 j = 0;
     UINT8 *pTmpData = (UINT8 *)pData;
     UINT8 AxisIndex;
+    comm_od_ecat_txpdo_t axis0_txpdo = {0};
+    UINT8 axis0_txpdo_valid = comm_od_core_read_ecat_txpdo(&axis0_txpdo);
 
     for (j = 0; j < sTxPDOassign.u16SubIndex0; j++)
     {
@@ -1321,14 +1323,13 @@ void APPL_InputMapping(UINT16* pData)
 
                 if (AxisIndex == 0U)
                 {
-                    comm_od_ecat_txpdo_t txpdo = {0};
-                    if (comm_od_core_read_ecat_txpdo(&txpdo) != 0U)
+                    if (axis0_txpdo_valid != 0U)
                     {
-                        status_word = txpdo.status_word;
-                        position_actual = txpdo.actual_position;
-                        velocity_actual = txpdo.actual_velocity;
-                        mode_display = txpdo.mode_display;
-                        torque_actual = txpdo.torque_actual;
+                        status_word = axis0_txpdo.status_word;
+                        position_actual = axis0_txpdo.actual_position;
+                        velocity_actual = axis0_txpdo.actual_velocity;
+                        mode_display = axis0_txpdo.mode_display;
+                        torque_actual = axis0_txpdo.torque_actual;
                     }
                 }
 
@@ -1353,14 +1354,13 @@ void APPL_InputMapping(UINT16* pData)
 
                 if (AxisIndex == 0U)
                 {
-                    comm_od_ecat_txpdo_t txpdo = {0};
-                    if (comm_od_core_read_ecat_txpdo(&txpdo) != 0U)
+                    if (axis0_txpdo_valid != 0U)
                     {
-                        status_word = txpdo.status_word;
-                        position_actual = txpdo.actual_position;
-                        velocity_actual = txpdo.actual_velocity;
-                        mode_display = txpdo.mode_display;
-                        torque_actual = txpdo.torque_actual;
+                        status_word = axis0_txpdo.status_word;
+                        position_actual = axis0_txpdo.actual_position;
+                        velocity_actual = axis0_txpdo.actual_velocity;
+                        mode_display = axis0_txpdo.mode_display;
+                        torque_actual = axis0_txpdo.torque_actual;
                     }
                 }
 
@@ -1385,14 +1385,13 @@ void APPL_InputMapping(UINT16* pData)
 
                 if (AxisIndex == 0U)
                 {
-                    comm_od_ecat_txpdo_t txpdo = {0};
-                    if (comm_od_core_read_ecat_txpdo(&txpdo) != 0U)
+                    if (axis0_txpdo_valid != 0U)
                     {
-                        status_word = txpdo.status_word;
-                        position_actual = txpdo.actual_position;
-                        velocity_actual = txpdo.actual_velocity;
-                        mode_display = txpdo.mode_display;
-                        torque_actual = txpdo.torque_actual;
+                        status_word = axis0_txpdo.status_word;
+                        position_actual = axis0_txpdo.actual_position;
+                        velocity_actual = axis0_txpdo.actual_velocity;
+                        mode_display = axis0_txpdo.mode_display;
+                        torque_actual = axis0_txpdo.torque_actual;
                     }
                 }
 
