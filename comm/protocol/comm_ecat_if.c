@@ -221,14 +221,6 @@ static void comm_ecat_apply_cia402_commands(void)
 static void comm_ecat_health_poll(void)
 {
     uint16_t al_status = 0U;
-
-    g_health_divider++;
-    if (g_health_divider < 1000U)
-    {
-        return;
-    }
-
-    g_health_divider = 0U;
     HW_EscReadWord(al_status, ESC_AL_STATUS_OFFSET);
     g_last_al_status = al_status;
 
@@ -316,11 +308,9 @@ void comm_ecat_if_init(void)
     g_reinit_divider = 0U;
 }
 
-void comm_ecat_if_process(void)
+void comm_ecat_if_tick_1ms(void)
 {
-    uint8_t apply_axis_cmd = 0U;
-
-    if (!g_ecat_ready)
+    if (g_ecat_ready == 0U)
     {
         g_reinit_divider++;
         if (g_reinit_divider >= 1000U)
@@ -328,6 +318,23 @@ void comm_ecat_if_process(void)
             g_reinit_divider = 0U;
             comm_ecat_if_init();
         }
+        return;
+    }
+
+    g_health_divider++;
+    if (g_health_divider >= 1000U)
+    {
+        g_health_divider = 0U;
+        comm_ecat_health_poll();
+    }
+}
+
+void comm_ecat_if_process(void)
+{
+    uint8_t apply_axis_cmd = 0U;
+
+    if (!g_ecat_ready)
+    {
         return;
     }
 
@@ -344,7 +351,6 @@ void comm_ecat_if_process(void)
         g_axis_apply_cycles++;
         comm_ecat_apply_cia402_commands();
     }
-    comm_ecat_health_poll();
 }
 
 uint8_t comm_ecat_if_is_ready(void)

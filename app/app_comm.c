@@ -13,7 +13,6 @@
 #endif
 
 static uint16_t g_vofa_divider = 0U;
-static uint16_t g_ecat_init_retry_divider = 0U;
 
 void App_CommInit(void)
 {
@@ -49,19 +48,13 @@ void App_CommTick(void)
 
     comm_modbus_process();
 #if APP_ECAT_ENABLE
+    comm_ecat_if_tick_1ms();
+
     if (!comm_ecat_if_is_ready())
     {
         App_AxisSetSlowLoopSource(APP_AXIS_SLOW_LOOP_SRC_TIM7);
-        g_ecat_init_retry_divider++;
-        if (g_ecat_init_retry_divider >= 1000U)
-        {
-            g_ecat_init_retry_divider = 0U;
-            comm_ecat_if_init();
-        }
         return;
     }
-
-    g_ecat_init_retry_divider = 0U;
 
     if (bDcSyncActive)
     {
