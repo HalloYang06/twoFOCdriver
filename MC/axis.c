@@ -181,7 +181,7 @@ void axis_calibrate_encoder(axis_t *axis)
     axis->state = AXIS_STATE_READY;
 }
 
-void axis_slow_loop_handler(axis_t *axis, float dt)
+void axis_feedback_update_handler(axis_t *axis, float dt)
 {
     float speed_rad_s = 0.0f;
     float position_rad = axis->position_mech_rad;
@@ -210,7 +210,10 @@ void axis_slow_loop_handler(axis_t *axis, float dt)
         axis->enable_pending = 0U;
         axis_start_closed_loop(axis);
     }
+}
 
+void axis_outer_loop_handler(axis_t *axis)
+{
     if (axis->state != AXIS_STATE_RUNNING)
     {
         return;
@@ -248,6 +251,12 @@ void axis_slow_loop_handler(axis_t *axis, float dt)
             foc_cal_velocity_loop(&axis->foc);
         }
     }
+}
+
+void axis_slow_loop_handler(axis_t *axis, float dt)
+{
+    axis_feedback_update_handler(axis, dt);
+    axis_outer_loop_handler(axis);
 }
 
 void axis_current_loop_irq_handler(axis_t *axis,

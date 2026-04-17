@@ -61,6 +61,8 @@ void axis_request_move(axis_t *axis);
 void axis_stop_move(axis_t *axis);
 void axis_calibrate_current_sense(axis_t *axis, uint32_t sample_count);
 void axis_calibrate_encoder(axis_t *axis);
+void axis_feedback_update_handler(axis_t *axis, float dt);
+void axis_outer_loop_handler(axis_t *axis);
 void axis_slow_loop_handler(axis_t *axis, float dt);
 void axis_current_loop_irq_handler(axis_t *axis,
                                    uint16_t sample_ch15,

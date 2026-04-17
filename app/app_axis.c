@@ -71,12 +71,18 @@ app_axis_slow_loop_source_t App_AxisGetSlowLoopSource(void)
 
 void App_AxisSlowLoopTick(void)
 {
-    if (g_slow_loop_source != APP_AXIS_SLOW_LOOP_SRC_TIM7)
+    if (g_slow_loop_source == APP_AXIS_SLOW_LOOP_SRC_TIM7)
     {
+        axis_slow_loop_handler(&g_axis0, 0.001f);
         return;
     }
 
-    axis_slow_loop_handler(&g_axis0, 0.001f);
+    if (g_slow_loop_source == APP_AXIS_SLOW_LOOP_SRC_SYNC0)
+    {
+        /* SYNC0 模式下，TIM7 只负责反馈刷新，外环计算由 SYNC0 节拍触发。 */
+        axis_feedback_update_handler(&g_axis0, 0.001f);
+        return;
+    }
 }
 
 void App_AxisSync0Tick(void)
@@ -86,7 +92,7 @@ void App_AxisSync0Tick(void)
         return;
     }
 
-    axis_slow_loop_handler(&g_axis0, 0.001f);
+    axis_outer_loop_handler(&g_axis0);
 }
 
 void App_AxisCurrentLoopIrqHandler(uint16_t sample_ch15, uint16_t sample_ch3, uint16_t sample_ch8)
