@@ -335,11 +335,6 @@ void comm_ecat_if_process(void)
     {
         apply_axis_cmd = 1U;
     }
-    else if (g_sync0_irq_seq_handled != g_sync0_irq_seq)
-    {
-        apply_axis_cmd = 1U;
-        g_sync0_irq_seq_handled = g_sync0_irq_seq;
-    }
 
     g_mainloop_cycles++;
     comm_ecat_update_feedback_to_cia402();
