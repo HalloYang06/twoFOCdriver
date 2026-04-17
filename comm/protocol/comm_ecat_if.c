@@ -23,6 +23,10 @@ extern TCiA402Axis LocalAxes[MAX_AXES];
 #define COMM_ECAT_VEL_SCALE 1.0f
 #endif
 
+#ifndef COMM_ECAT_SYNC0_APPLY_IN_ISR
+#define COMM_ECAT_SYNC0_APPLY_IN_ISR 1
+#endif
+
 #define COMM_ECAT_MODE_CSP 8
 #define COMM_ECAT_MODE_CSV 9
 #define COMM_ECAT_MODE_CST 10
@@ -342,6 +346,13 @@ void comm_ecat_if_process(void)
     {
         apply_axis_cmd = 1U;
     }
+#if (COMM_ECAT_SYNC0_APPLY_IN_ISR == 0)
+    else if (g_sync0_irq_seq_handled != g_sync0_irq_seq)
+    {
+        apply_axis_cmd = 1U;
+        g_sync0_irq_seq_handled = g_sync0_irq_seq;
+    }
+#endif
 
     g_mainloop_cycles++;
     comm_ecat_update_feedback_to_cia402();
@@ -433,10 +444,12 @@ void comm_ecat_if_on_sync0_irq(void)
     g_sync0_irq_seq++;
     App_AxisSync0Tick();
 
+#if (COMM_ECAT_SYNC0_APPLY_IN_ISR != 0)
     if ((g_trigger_source == COMM_ECAT_TRIGGER_SYNC0) && (g_ecat_ready != 0U))
     {
         g_axis_apply_cycles++;
         comm_ecat_apply_cia402_commands();
         g_sync0_irq_seq_handled = g_sync0_irq_seq;
     }
+#endif
 }
