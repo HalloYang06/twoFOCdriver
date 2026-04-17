@@ -21,6 +21,14 @@
         return COMM_OK
 
 static axis_t *g_axis0;
+static float g_compat_target_current = 0.0f;
+static float g_compat_accel = 0.0f;
+static float g_compat_decel = 0.0f;
+static float g_compat_runtime_ms = 0.0f;
+static float g_compat_curr_kf = 0.0f;
+static float g_compat_speed_kf = 0.0f;
+static float g_compat_pos_vff = 0.0f;
+static float g_compat_pos_aff = 0.0f;
 
 static uint32_t comm_od_irq_lock(void)
 {
@@ -86,6 +94,10 @@ comm_status_t comm_od_read_holding_word(uint16_t reg_addr, uint16_t *out_word)
 
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_AXIS0_TARGET_POS,   ax->target_position);
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_AXIS0_TARGET_SPEED, ax->foc.target_velocity);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_AXIS0_TARGET_CURRENT, g_compat_target_current);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_AXIS0_ACCEL, g_compat_accel);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_AXIS0_DECEL, g_compat_decel);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_AXIS0_RUNTIME_MS, g_compat_runtime_ms);
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_SPEED_KP,           ax->foc.pid_velocity.kp);
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_SPEED_KI,           ax->foc.pid_velocity.ki);
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_POS_KP,             ax->pid_position.kp);
@@ -95,12 +107,29 @@ comm_status_t comm_od_read_holding_word(uint16_t reg_addr, uint16_t *out_word)
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_ID_KP,              ax->foc.pid_id.kp);
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_ID_KI,              ax->foc.pid_id.ki);
         READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_IQ_REF,             ax->foc.target_iq);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_CURR_KP,            ax->foc.pid_iq.kp);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_CURR_KI,            ax->foc.pid_iq.ki);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_CURR_KF,            g_compat_curr_kf);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_SPEED_LOOP_KP,      ax->foc.pid_velocity.kp);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_SPEED_LOOP_KI,      ax->foc.pid_velocity.ki);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_SPEED_KF,           g_compat_speed_kf);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_POS_LOOP_KP,        ax->pid_position.kp);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_POS_VFF,            g_compat_pos_vff);
+        READ_FLOAT_REG(COMM_MODBUS_REG_HOLD_POS_AFF,            g_compat_pos_aff);
 
         case COMM_MODBUS_REG_HOLD_CTRL_MODE:
             *out_word = (uint16_t)ax->mode;
             return COMM_OK;
 
         case COMM_MODBUS_REG_HOLD_MOVE_FLAG:
+            *out_word = (uint16_t)ax->move_flag;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_CMD_AXIS0_ENABLE:
+            *out_word = (uint16_t)((ax->state == AXIS_STATE_RUNNING) ? 1U : 0U);
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_CMD_AXIS0_MOVE:
             *out_word = (uint16_t)ax->move_flag;
             return COMM_OK;
 
@@ -222,6 +251,14 @@ comm_status_t comm_od_write_single(uint16_t reg_addr, uint16_t value)
             }
             return COMM_OK;
 
+        case COMM_MODBUS_REG_CMD_SET_ZERO:
+            /* Legacy host compatibility: keep command writable without changing control core. */
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_CMD_CLEAR_FAULT:
+            /* Legacy host compatibility: clear-fault command is accepted as no-op. */
+            return COMM_OK;
+
         case COMM_MODBUS_REG_HOLD_CTRL_MODE:
             irq_state = comm_od_irq_lock();
             axis_set_mode(ax, (axis_mode_t)value);
@@ -268,6 +305,23 @@ comm_status_t comm_od_write_multi_words(uint16_t reg_addr, const uint16_t *words
             axis_set_velocity_ref(ax, value);
             return COMM_OK;
 
+        case COMM_MODBUS_REG_HOLD_AXIS0_TARGET_CURRENT:
+            g_compat_target_current = value;
+            axis_set_current_ref(ax, value);
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_AXIS0_ACCEL:
+            g_compat_accel = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_AXIS0_DECEL:
+            g_compat_decel = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_AXIS0_RUNTIME_MS:
+            g_compat_runtime_ms = value;
+            return COMM_OK;
+
         case COMM_MODBUS_REG_HOLD_IQ_REF:
             axis_set_current_ref(ax, value);
             return COMM_OK;
@@ -302,6 +356,42 @@ comm_status_t comm_od_write_multi_words(uint16_t reg_addr, const uint16_t *words
 
         case COMM_MODBUS_REG_HOLD_ID_KI:
             ax->foc.pid_id.ki = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_CURR_KP:
+            ax->foc.pid_iq.kp = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_CURR_KI:
+            ax->foc.pid_iq.ki = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_CURR_KF:
+            g_compat_curr_kf = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_SPEED_LOOP_KP:
+            ax->foc.pid_velocity.kp = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_SPEED_LOOP_KI:
+            ax->foc.pid_velocity.ki = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_SPEED_KF:
+            g_compat_speed_kf = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_POS_LOOP_KP:
+            ax->pid_position.kp = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_POS_VFF:
+            g_compat_pos_vff = value;
+            return COMM_OK;
+
+        case COMM_MODBUS_REG_HOLD_POS_AFF:
+            g_compat_pos_aff = value;
             return COMM_OK;
 
         default:
