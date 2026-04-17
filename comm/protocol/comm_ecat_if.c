@@ -24,7 +24,7 @@ extern TCiA402Axis LocalAxes[MAX_AXES];
 #endif
 
 #ifndef COMM_ECAT_SYNC0_APPLY_IN_ISR
-#define COMM_ECAT_SYNC0_APPLY_IN_ISR 1
+#define COMM_ECAT_SYNC0_APPLY_IN_ISR 0
 #endif
 
 #define COMM_ECAT_MODE_CSP 8
@@ -247,6 +247,8 @@ static void comm_ecat_health_poll(void)
     }
 
     g_recovery_attempts++;
+    g_ecat_ready = 0U;
+    g_ecat_failed = 1U;
     bRunApplication = FALSE;
     comm_ecat_release_cia402_axis();
 
@@ -257,6 +259,8 @@ static void comm_ecat_health_poll(void)
 
     if ((bsp_lan9252_is_initialized() != 0U) && (comm_ecat_stack_bootstrap() != 0U))
     {
+        g_ecat_ready = 1U;
+        g_ecat_failed = 0U;
         g_bad_health_samples = 0U;
         g_ecat_health_ok = 1U;
         g_recovery_successes++;
