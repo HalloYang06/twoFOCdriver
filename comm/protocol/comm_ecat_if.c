@@ -48,12 +48,6 @@ static uint16_t g_last_al_status = 0U;
 static uint32_t g_reinit_divider = 0U;
 static uint8_t g_cia402_axis_allocated = 0U;
 
-static void comm_ecat_if_fill_txpdo(uint16_t *status_word,
-                                    int32_t *actual_position,
-                                    int32_t *actual_velocity,
-                                    int16_t *mode_display,
-                                    int16_t *torque_actual);
-
 static void comm_ecat_release_cia402_axis(void)
 {
     if (g_cia402_axis_allocated != 0U)
@@ -443,40 +437,5 @@ void comm_ecat_if_on_sync0_irq(void)
         g_axis_apply_cycles++;
         comm_ecat_apply_cia402_commands();
         g_sync0_irq_seq_handled = g_sync0_irq_seq;
-    }
-}
-
-static void comm_ecat_if_fill_txpdo(uint16_t *status_word,
-                                    int32_t *actual_position,
-                                    int32_t *actual_velocity,
-                                    int16_t *mode_display,
-                                    int16_t *torque_actual)
-{
-    comm_od_ecat_txpdo_t txpdo = {0};
-    const uint8_t has_snapshot = comm_od_core_read_ecat_txpdo(&txpdo);
-
-    if (status_word != 0)
-    {
-        *status_word = (has_snapshot != 0U) ? txpdo.status_word : comm_ecat_build_status_word();
-    }
-
-    if (actual_position != 0)
-    {
-        *actual_position = (has_snapshot != 0U) ? txpdo.actual_position : (int32_t)(g_axis0.position_mech_rad * COMM_ECAT_POS_SCALE);
-    }
-
-    if (actual_velocity != 0)
-    {
-        *actual_velocity = (has_snapshot != 0U) ? txpdo.actual_velocity : (int32_t)(g_axis0.speed_mech_rad_s * COMM_ECAT_VEL_SCALE);
-    }
-
-    if (mode_display != 0)
-    {
-        *mode_display = (has_snapshot != 0U) ? txpdo.mode_display : LocalAxes[0].Objects.objModesOfOperationDisplay;
-    }
-
-    if (torque_actual != 0)
-    {
-        *torque_actual = (has_snapshot != 0U) ? txpdo.torque_actual : (INT16)g_axis0.foc.i_dq.q;
     }
 }
