@@ -46,12 +46,22 @@ static uint32_t g_mainloop_cycles = 0U;
 static uint32_t g_axis_apply_cycles = 0U;
 static uint16_t g_last_al_status = 0U;
 static uint32_t g_reinit_divider = 0U;
+static uint8_t g_cia402_axis_allocated = 0U;
 
 static void comm_ecat_if_fill_txpdo(uint16_t *status_word,
                                     int32_t *actual_position,
                                     int32_t *actual_velocity,
                                     int16_t *mode_display,
                                     int16_t *torque_actual);
+
+static void comm_ecat_release_cia402_axis(void)
+{
+    if (g_cia402_axis_allocated != 0U)
+    {
+        CiA402_DeallocateAxis();
+        g_cia402_axis_allocated = 0U;
+    }
+}
 
 static uint8_t comm_ecat_stack_bootstrap(void)
 {
@@ -77,13 +87,14 @@ static uint8_t comm_ecat_stack_bootstrap(void)
         return 0U;
     }
     cia402_initialized = 1U;
+    g_cia402_axis_allocated = 1U;
 
     mapping_err = APPL_GenerateMapping(&nPdInputSize, &nPdOutputSize);
     if (mapping_err != 0U)
     {
         if (cia402_initialized != 0U)
         {
-            CiA402_DeallocateAxis();
+            comm_ecat_release_cia402_axis();
         }
         return 0U;
     }
@@ -122,8 +133,13 @@ static void comm_ecat_update_feedback_to_cia402(void)
     uint16_t status_word = comm_ecat_build_status_word();
     int32_t actual_position = (int32_t)(g_axis0.position_mech_rad * COMM_ECAT_POS_SCALE);
     int32_t actual_velocity = (int32_t)(g_axis0.speed_mech_rad_s * COMM_ECAT_VEL_SCALE);
-    int16_t mode_display = LocalAxes[0].Objects.objModesOfOperation;
+    int16_t mode_display = LocalAxes[0].Objects.objModesOfOperationDisplay;
     int16_t torque_actual = (INT16)g_axis0.foc.i_dq.q;
+
+    if (mode_display == 0)
+    {
+        mode_display = LocalAxes[0].Objects.objModesOfOperation;
+    }
 
     LocalAxes[0].Objects.objStatusWord = (INT16)status_word;
     LocalAxes[0].Objects.objPositionActualValue = actual_position;
@@ -242,7 +258,7 @@ static void comm_ecat_health_poll(void)
 
     g_recovery_attempts++;
     bRunApplication = FALSE;
-    CiA402_DeallocateAxis();
+    comm_ecat_release_cia402_axis();
 
     if (bsp_lan9252_is_initialized() == 0U)
     {
@@ -364,11 +380,13 @@ void comm_ecat_if_force_reinit(void)
     g_last_target_position = 0;
     g_health_divider = 0U;
     g_bad_health_samples = 0U;
+    comm_ecat_release_cia402_axis();
     comm_od_core_clear_ecat_rxpdo();
     comm_od_core_clear_ecat_txpdo();
     g_sync0_irq_seq = 0U;
     g_sync0_irq_seq_handled = 0U;
     g_last_al_status = 0U;
+    g_reinit_divider = 0U;
 
     bsp_lan9252_irq_unlock(irq_state);
 }
@@ -454,7 +472,7 @@ static void comm_ecat_if_fill_txpdo(uint16_t *status_word,
 
     if (mode_display != 0)
     {
-        *mode_display = (has_snapshot != 0U) ? txpdo.mode_display : LocalAxes[0].Objects.objModesOfOperation;
+        *mode_display = (has_snapshot != 0U) ? txpdo.mode_display : LocalAxes[0].Objects.objModesOfOperationDisplay;
     }
 
     if (torque_actual != 0)

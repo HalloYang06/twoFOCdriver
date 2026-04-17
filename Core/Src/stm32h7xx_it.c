@@ -527,7 +527,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
   * @param  GPIO_Pin: 瑙﹀彂涓柇鐨凣PIO寮曡剼
   * @retval None
   */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void BSP_HAL_GPIO_EXTI_Callback_STUB(uint16_t GPIO_Pin)
 {
     bsp_lan9252_handle_exti(GPIO_Pin);
 }
