@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STM32H7 FOC 电机控制项目面试演示文档</title>
+  <style>
+    :root {
+      --bg: #0e1418;
+      --surface: #151d22;
+      --surface-2: #1d2930;
+      --line: #31424c;
+      --text: #e8f1f2;
+      --muted: #a8bac2;
+      --soft: #d7e4e8;
+      --green: #00a896;
+      --blue: #00a6fb;
+      --amber: #ffb703;
+      --red: #d7263d;
+      --violet: #7b61ff;
+      --code: #10181d;
+      --shadow: 0 18px 48px rgba(0, 0, 0, .26);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        linear-gradient(180deg, rgba(0, 168, 150, .10), transparent 520px),
+        var(--bg);
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      line-height: 1.68;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 44px));
+      margin: 0 auto;
+    }
+
+    header {
+      min-height: 92vh;
+      display: grid;
+      align-items: center;
+      padding: 48px 0 32px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+      gap: 30px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 16px 0;
+      font-size: clamp(36px, 5.2vw, 68px);
+      max-width: 980px;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--soft);
+      font-size: 19px;
+      max-width: 840px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 168, 150, .55);
+      color: var(--text);
+      background: rgba(0, 168, 150, .18);
+      font-weight: 700;
+    }
+
+    .button.secondary {
+      background: rgba(255, 255, 255, .04);
+      border-color: var(--line);
+    }
+
+    .hero-panel,
+    .card,
+    .mini-card,
+    .metric,
+    .quote,
+    .timeline-item,
+    .toc {
+      background: rgba(21, 29, 34, .92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      padding: 22px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 16px;
+      box-shadow: none;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 28px;
+      color: var(--green);
+      line-height: 1.15;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toc-wrap {
+      margin-top: -36px;
+      padding-bottom: 28px;
+    }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      overflow: hidden;
+      background: var(--line);
+      box-shadow: none;
+    }
+
+    .toc a {
+      padding: 14px 16px;
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    section {
+      padding: 44px 0;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 34px;
+    }
+
+    h3 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+
+    h4 {
+      margin: 18px 0 8px;
+      font-size: 17px;
+      color: var(--soft);
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: var(--soft);
+    }
+
+    .section-lead {
+      max-width: 900px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card,
+    .mini-card,
+    .quote {
+      padding: 20px;
+      box-shadow: none;
+    }
+
+    .mini-card {
+      background: rgba(29, 41, 48, .82);
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .10);
+      color: var(--soft);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: #cbf7ee;
+      border-color: rgba(0, 168, 150, .35);
+      background: rgba(0, 168, 150, .15);
+    }
+
+    .tag.amber {
+      color: #ffecb0;
+      border-color: rgba(255, 183, 3, .35);
+      background: rgba(255, 183, 3, .13);
+    }
+
+    .tag.blue {
+      color: #c7edff;
+      border-color: rgba(0, 166, 251, .35);
+      background: rgba(0, 166, 251, .13);
+    }
+
+    .diagram {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .flow-node {
+      min-height: 86px;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+
+    .flow-node strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .flow-node span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .flow-arrow {
+      text-align: center;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      color: var(--text);
+      background: rgba(255, 255, 255, .05);
+      font-size: 14px;
+    }
+
+    td {
+      color: var(--soft);
+      font-size: 14px;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code,
+    pre {
+      font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: #d6fff8;
+      background: rgba(0, 168, 150, .12);
+      border: 1px solid rgba(0, 168, 150, .18);
+    }
+
+    pre {
+      margin: 14px 0 0;
+      overflow: auto;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--code);
+      color: #dce9ec;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+      color: var(--soft);
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 14px;
+      padding: 16px;
+      box-shadow: none;
+    }
+
+    .timeline-item .time {
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .callout {
+      border-left: 4px solid var(--green);
+      padding: 14px 16px;
+      margin: 16px 0;
+      background: rgba(0, 168, 150, .10);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .callout.warn {
+      border-left-color: var(--amber);
+      background: rgba(255, 183, 3, .10);
+    }
+
+    .callout.risk {
+      border-left-color: var(--red);
+      background: rgba(215, 38, 61, .10);
+    }
+
+    .quote {
+      color: var(--soft);
+      background: rgba(0, 166, 251, .08);
+      border-color: rgba(0, 166, 251, .26);
+    }
+
+    .source-list {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .source-list li {
+      margin: 4px 0;
+    }
+
+    footer {
+      padding: 42px 0 54px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .split,
+      .grid-2,
+      .grid-3,
+      .grid-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .flow-row {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-item {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #111;
+      }
+
+      .hero-panel,
+      .card,
+      .mini-card,
+      .metric,
+      .quote,
+      .timeline-item,
+      .toc,
+      .flow-node,
+      .table-wrap {
+        box-shadow: none;
+        background: #fff;
+        color: #111;
+        border-color: #d0d7de;
+      }
+
+      p,
+      li,
+      td,
+      .section-lead,
+      .source-list {
+        color: #333;
+      }
+
+      .toc-wrap,
+      .hero-actions {
+        display: none;
+      }
+
+      header {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header id="top">
+    <div class="page hero">
+      <div>
+        <div class="eyebrow">面试演示版 · 固件 + 上位机一体化项目</div>
+        <h1>STM32H7 FOC 伺服控制器与 DriverStudio 调试平台</h1>
+        <p class="lead">
+          这个项目不是单点算法 Demo，而是一套从 STM32H750 实时电机控制、三环 FOC、编码器与电流采样，到 RS485/Modbus、CAN/CANopen、EtherCAT/CiA402 预研，再到 Qt6 上位机调参、监控、波形与诊断的完整工程闭环。
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="#demo-script">查看演示脚本</a>
+          <a class="button secondary" href="#highlights">项目亮点</a>
+          <a class="button secondary" href="#source-map">代码地图</a>
+        </div>
+      </div>
+      <aside class="hero-panel">
+        <div class="metric-grid">
+          <div class="metric"><strong>20 kHz</strong><span>电流环 / PWM 同步采样</span></div>
+          <div class="metric"><strong>1 kHz</strong><span>速度环、位置环与通信调度</span></div>
+          <div class="metric"><strong>3 环</strong><span>电流环、速度环、位置环</span></div>
+          <div class="metric"><strong>3 总线</strong><span>RS485、CAN、EtherCAT 方向</span></div>
+          <div class="metric"><strong>138</strong><span>固件侧核心源码/文档文件</span></div>
+          <div class="metric"><strong>97</strong><span>DriverStudio 核心源码/文档文件</span></div>
+        </div>
+        <div class="tag-row">
+          <span class="tag green">STM32H750</span>
+          <span class="tag green">FOC</span>
+          <span class="tag blue">Qt6 C++20</span>
+          <span class="tag amber">Modbus RTU</span>
+          <span class="tag amber">CANopen</span>
+          <span class="tag">EtherCAT CiA402</span>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <div class="toc-wrap">
+    <nav class="page toc">
+      <a href="#overview">项目总览</a>
+      <a href="#firmware">固件架构</a>
+      <a href="#host">上位机架构</a>
+      <a href="#interview">面试讲法</a>
+      <a href="#demo-script">演示流程</a>
+      <a href="#risks">改进计划</a>
+      <a href="#source-map">代码地图</a>
+      <a href="#qa">常见追问</a>
+    </nav>
+  </div>
+
+  <main class="page">
+    <section id="overview">
+      <h2>1. 项目总览</h2>
+      <p class="section-lead">
+        项目目标是做一套面向电机驱动器调试和控制验证的端到端系统。下位机运行在 STM32H750 上，负责实时 FOC 控制、采样、编码器反馈、PWM 输出和工业通信；上位机 DriverStudio 用 Qt6/C++20 实现，负责连接配置、寄存器读写、运动命令、三环参数整定、实时监控、波形和日志诊断。
+      </p>
+
+      <div class="diagram">
+        <div class="flow-row">
+          <div class="flow-node"><strong>Qt6 上位机</strong><span>连接配置、命令编排、参数整定、波形监控、日志诊断</span></div>
+          <div class="flow-node"><strong>协议层</strong><span>Modbus RTU、CANopen、EtherCAT CoE 接口预留</span></div>
+          <div class="flow-node"><strong>通信链路</strong><span>RS485、CAN、SPI-LAN9252、UART DMA</span></div>
+          <div class="flow-node"><strong>控制对象</strong><span>axis 状态机、三环控制、对象字典寄存器映射</span></div>
+          <div class="flow-node"><strong>功率与传感</strong><span>TIM1 三相 PWM、ADC2 注入采样、多摩川编码器</span></div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top: 18px;">
+        <article class="card">
+          <h3>下位机主线</h3>
+          <p>用 STM32H7 的定时器、ADC 注入转换、DMA、UART、SPI、FDCAN 等外设构建实时控制系统。核心控制链路是电流采样到 Clarke/Park 变换，再到 d/q 电流 PID、反 Park、SVPWM 和 PWM 占空比更新。</p>
+        </article>
+        <article class="card">
+          <h3>上位机主线</h3>
+          <p>Qt6 应用通过统一的 SessionService 管理会话，把 Transport 和 Protocol Adapter 解耦；MotorControlService 再把“使能、启动、调参、读取反馈”翻译成寄存器命令。</p>
+        </article>
+        <article class="card">
+          <h3>工程主线</h3>
+          <p>项目体现的不只是算法，而是工程化能力：分层抽象、实时中断边界、DMA/Cache 注意事项、协议一致性、硬件联调、仿真链路、测试回归和可演示 UI。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="highlights">
+      <h2>2. 可以重点展示的项目亮点</h2>
+      <div class="grid-2">
+        <article class="card">
+          <h3>亮点一：从算法到硬件的闭环 FOC</h3>
+          <p>项目没有停留在离线公式推导，而是把 FOC 拆成可运行的实时控制路径：ADC2 采样三相电流，编码器提供电角度，当前环在中断中执行，SVPWM 直接落到 TIM1 三相互补 PWM。</p>
+          <ul>
+            <li>电流环采样周期为 50 us，FOC 计算必须在高频 ISR 内完成。</li>
+            <li>速度/位置外环以 1 ms 节拍执行，避免把慢环逻辑塞进 20 kHz 中断。</li>
+            <li>电压幅值做限幅，降低 PID 输出过大导致的调制异常。</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>亮点二：业务对象化，Core 与业务分离</h3>
+          <p><code>Core/Src</code> 主要保留 CubeMX 外设初始化和中断转发，实际业务在 <code>app</code>、<code>MC</code>、<code>BSP</code>、<code>comm</code> 中完成。这让工程既能继续使用 CubeMX，又不会把业务逻辑散落在自动生成代码里。</p>
+          <ul>
+            <li><code>app_axis.c</code> 负责装配轴对象、编码器、电流采样和 PWM。</li>
+            <li><code>axis.c</code> 管理状态机、运动请求、三环调度。</li>
+            <li><code>mc_foc.c</code> 专注 FOC 算法本身。</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>亮点三：协议层不是“写死串口命令”</h3>
+          <p>下位机把 Modbus 解析、对象字典和控制业务分开：<code>comm_modbus.c</code> 处理帧，<code>comm_od.c</code> 处理寄存器语义，<code>axis</code> 执行真实控制。这个边界让 CANopen、EtherCAT、上位机调试都能复用同一套控制对象。</p>
+          <ul>
+            <li>支持 <code>0x03</code>、<code>0x04</code>、<code>0x06</code>、<code>0x10</code>。</li>
+            <li>float 拆成两个 16-bit 寄存器，高字在前、低字在后。</li>
+            <li>新增 EtherCAT 诊断寄存器，不破坏旧 TEST1 协议主路径。</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>亮点四：上位机有仿真闭环和测试覆盖</h3>
+          <p>DriverStudio 默认可以用 <code>SimulatedTransport</code> 运行，不依赖硬件也能验证 Modbus、CANopen、会话生命周期、波形、主题和工作区保存。面试时这很有价值，因为可以现场演示 UI 与协议闭环。</p>
+          <ul>
+            <li>Transport 和 Protocol Adapter 双抽象支持多总线扩展。</li>
+            <li>QtTest 覆盖配置序列化、协议编解码、仿真链路、工作区、主题和回归 UI。</li>
+            <li>串口监视器能显示 TX/RX 原始帧，方便定位协议问题。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="firmware">
+      <h2>3. 下位机固件架构</h2>
+      <p class="section-lead">
+        固件侧建议按“外设资源层、BSP 层、控制算法层、轴对象层、应用装配层、通信协议层”来讲。这样面试官能看到你不是只会写单个驱动，而是能组织一个实时控制工程。
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>层级</th>
+              <th>主要文件</th>
+              <th>职责</th>
+              <th>演示时一句话</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Core 外设层</td>
+              <td><code>Core/Src/main.c</code><br><code>Core/Src/stm32h7xx_it.c</code></td>
+              <td>CubeMX 初始化 TIM、ADC、DMA、UART、SPI、FDCAN；中断回调只做转发。</td>
+              <td>“我把 CubeMX 生成层和业务层隔离，降低后续重生成代码的风险。”</td>
+            </tr>
+            <tr>
+              <td>BSP 驱动层</td>
+              <td><code>BSP/bsp_pwm.c</code><br><code>BSP/bsp_current_sense.c</code><br><code>BSP/bsp_tamagawa_uart.c</code><br><code>BSP/bsp_lan9252.c</code></td>
+              <td>封装 PWM、电流采样、编码器、RS485 UART、LAN9252/SPI 等硬件细节。</td>
+              <td>“BSP 向上提供稳定接口，控制层不直接依赖 HAL 细节。”</td>
+            </tr>
+            <tr>
+              <td>算法库</td>
+              <td><code>libraries/foc/*</code><br><code>libraries/control/pid.c</code><br><code>libraries/filter/*</code></td>
+              <td>Clarke/Park、反 Park、SVPWM、PID、滤波器、数学工具。</td>
+              <td>“算法函数做成独立库，便于单独调参、替换和复用。”</td>
+            </tr>
+            <tr>
+              <td>控制核心</td>
+              <td><code>MC/mc_foc.c</code><br><code>MC/axis.c</code></td>
+              <td>FOC 状态、d/q 电流环、速度环、位置环、轴状态机和运动请求。</td>
+              <td>“axis 是控制对象，FOC 是算法内核。”</td>
+            </tr>
+            <tr>
+              <td>应用装配</td>
+              <td><code>app/app_axis.c</code><br><code>app/app_comm.c</code></td>
+              <td>绑定具体外设实例，启动采样、通信、VOFA、EtherCAT 调度。</td>
+              <td>“具体硬件资源在 app 层装配，便于扩展第二轴。”</td>
+            </tr>
+            <tr>
+              <td>通信协议</td>
+              <td><code>comm/protocol/comm_modbus.c</code><br><code>comm/protocol/comm_od.c</code><br><code>comm/protocol/comm_ecat_if.c</code></td>
+              <td>Modbus RTU、对象字典、EtherCAT/CiA402 命令和诊断映射。</td>
+              <td>“通信不是直接改变量，而是通过对象字典翻译成控制动作。”</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top: 28px;">3.1 启动与实时调度</h3>
+      <div class="split">
+        <div class="card">
+          <p>固件启动时先打开 FPU，再初始化 GPIO、DMA、TIM、UART、ADC、FDCAN、SPI 等外设。业务层随后接管：启动 TIM1 基准与 CH4 触发，初始化轴对象、通信对象、使能轴，并启动 TIM7 1 ms 中断。</p>
+          <pre><code>main()
+  SCB-&gt;CPACR 开启 FPU
+  MX_GPIO_Init / MX_DMA_Init / MX_TIM1_Init / MX_ADC2_Init ...
+  HAL_TIM_Base_Start(&amp;htim1)
+  HAL_TIM_PWM_Start(&amp;htim1, TIM_CHANNEL_4)
+  App_AxisInit()
+  App_CommInit()
+  App_AxisEnable()
+  HAL_TIM_Base_Start_IT(&amp;htim7)</code></pre>
+        </div>
+        <aside class="quote">
+          <h3>面试讲法</h3>
+          <p>“FOC 中有大量 float 计算，我在系统启动早期打开 Cortex-M7 FPU，并用 DSB/ISB 做同步。这个问题我实际遇到过 HardFault，所以项目里也沉淀了故障复盘文档。”</p>
+        </aside>
+      </div>
+
+      <h3 style="margin-top: 28px;">3.2 FOC 控制链路</h3>
+      <div class="grid-4">
+        <div class="mini-card">
+          <h3>采样</h3>
+          <p>ADC2 注入转换采样 IN3、IN15、IN8，触发源来自 TIM1 CH4，确保电流采样与 PWM 时序对齐。</p>
+        </div>
+        <div class="mini-card">
+          <h3>坐标变换</h3>
+          <p>三相电流进入 Clarke 得到 alpha/beta，再根据电角度做 Park 得到 d/q 电流。</p>
+        </div>
+        <div class="mini-card">
+          <h3>闭环控制</h3>
+          <p>d 轴、q 轴分别做 PID，速度环输出 q 轴目标电流，位置环输出目标速度。</p>
+        </div>
+        <div class="mini-card">
+          <h3>调制输出</h3>
+          <p>反 Park 得到电压矢量，SVPWM 生成三相占空比，最终更新 TIM1 PWM。</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>关键点：</strong>电流环在 <code>HAL_ADCEx_InjectedConvCpltCallback</code> 中调用 <code>App_AxisCurrentLoopIrqHandler</code>，再进入 <code>axis_current_loop_irq_handler</code>。这个路径短、明确、没有阻塞调用，适合 20 kHz 的实时要求。</p>
+      </div>
+
+      <h3 style="margin-top: 28px;">3.3 三环控制如何协作</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>控制环</th>
+              <th>周期</th>
+              <th>输入</th>
+              <th>输出</th>
+              <th>代码位置</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>电流环</td>
+              <td>约 20 kHz / 50 us</td>
+              <td>三相电流、电角度、Iq/Id 目标</td>
+              <td>Vd/Vq、电压矢量、PWM 占空比</td>
+              <td><code>MC/mc_foc.c</code>、<code>MC/axis.c</code></td>
+            </tr>
+            <tr>
+              <td>速度环</td>
+              <td>1 kHz / 1 ms</td>
+              <td>编码器速度、目标速度</td>
+              <td>目标 Iq</td>
+              <td><code>foc_cal_velocity_loop</code></td>
+            </tr>
+            <tr>
+              <td>位置环</td>
+              <td>1 kHz / 1 ms</td>
+              <td>机械位置、目标位置</td>
+              <td>目标速度，再进入速度环</td>
+              <td><code>axis_outer_loop_handler</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top: 28px;">3.4 轴对象状态机</h3>
+      <p>轴对象 <code>axis_t</code> 将模式、状态、目标位置、当前位置、速度、FOC 对象、PWM 对象、电流采样对象和编码器接口统一封装。当前状态包括 <code>IDLE</code>、<code>CALIBRATING</code>、<code>READY</code>、<code>RUNNING</code>、<code>FAULT</code>，模式包括 <code>DISABLED</code>、<code>CURRENT</code>、<code>VELOCITY</code>、<code>POSITION</code>、<code>OPEN_LOOP</code>。</p>
+      <pre><code>axis_enable()
+  启动编码器
+  如果编码器未 ready，则 enable_pending
+  ready 后启动 PWM 并 foc_enable
+
+axis_disable()
+  foc_disable
+  PWM emergency stop
+  清理运动标志与 PID 状态
+
+axis_slow_loop_handler()
+  feedback_update: 读取位置/速度
+  outer_loop: 速度环或位置环</code></pre>
+
+      <h3 style="margin-top: 28px;">3.5 硬件与外设配置</h3>
+      <div class="grid-3">
+        <article class="mini-card">
+          <h3>PWM</h3>
+          <p>TIM1 使用中心对齐，Period 2999，Prescaler 1，三相互补输出 CH1/2/3，死区 100，CH4 作为 ADC 触发参考。</p>
+        </article>
+        <article class="mini-card">
+          <h3>采样</h3>
+          <p>ADC2 注入转换 3 通道，外部触发为 TIM1_CC4，采样时间 2.5 cycles，分辨率 12 bit。</p>
+        </article>
+        <article class="mini-card">
+          <h3>通信</h3>
+          <p>USART3 作为 RS485/Modbus 通信，921600 baud；USART2 用于多摩川编码器，2.5 Mbps；UART4 用于 VOFA JustFloat 调试。</p>
+        </article>
+        <article class="mini-card">
+          <h3>EtherCAT</h3>
+          <p>SPI3 连接 LAN9252，配置约 60 Mbit/s；SYNC0/SYNC1 和 IRQ 通过 EXTI 进入 EtherCAT 调度。</p>
+        </article>
+        <article class="mini-card">
+          <h3>CAN</h3>
+          <p>FDCAN1 已配置，代码中保留 CAN 控制入口，为后续 CANopen 或自定义 CAN 控制做准备。</p>
+        </article>
+        <article class="mini-card">
+          <h3>内存</h3>
+          <p>关键 DMA 相关对象放到 D2 SRAM / RAM_D2 区，规避 STM32H7 上 DTCM 与 DMA 可访问性、Cache 一致性问题。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="communication">
+      <h2>4. 通信协议与联调闭环</h2>
+      <p class="section-lead">
+        面试时建议把通信设计讲成“三层”：协议帧层负责收包验包，对象字典层负责寄存器语义，控制业务层负责真实动作。这说明你能把通信与控制解耦，而不是把串口解析写成一堆 if/else 直接改全局变量。
+      </p>
+
+      <div class="grid-3">
+        <article class="card">
+          <h3>Modbus RTU</h3>
+          <p>支持读保持寄存器、读输入寄存器、写单寄存器、写多寄存器。CRC 错误静默丢弃，非法功能码、非法地址、非法数量返回异常码。</p>
+          <div class="tag-row">
+            <span class="tag green">0x03</span>
+            <span class="tag green">0x04</span>
+            <span class="tag green">0x06</span>
+            <span class="tag green">0x10</span>
+          </div>
+        </article>
+        <article class="card">
+          <h3>对象字典</h3>
+          <p>寄存器被映射到 axis 状态、目标值、PID 参数、EtherCAT 诊断数据。float 用两个 16-bit word 表示，高 16 位在基地址，低 16 位在基地址 + 1。</p>
+        </article>
+        <article class="card">
+          <h3>EtherCAT/CiA402</h3>
+          <p>通过 LAN9252 接入 EtherCAT 从站栈，映射 CiA402 控制字、状态字、目标位置、速度、转矩，并支持 SYNC0 触发轴外环。</p>
+        </article>
+      </div>
+
+      <h3 style="margin-top: 28px;">4.1 关键寄存器</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>地址</th>
+              <th>方向</th>
+              <th>含义</th>
+              <th>上位机用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>0x0101</code></td><td>输入</td><td>位置反馈 float</td><td>仪表盘位置、波形通道、诊断读取</td></tr>
+            <tr><td><code>0x0103</code></td><td>输入</td><td>速度反馈 float</td><td>速度仪表、运动状态判断</td></tr>
+            <tr><td><code>0x0105</code></td><td>输入</td><td>电流反馈 float</td><td>电流仪表、调参观察</td></tr>
+            <tr><td><code>0x0202</code></td><td>命令</td><td>轴使能/失能</td><td>快速动作：Enable / Disable</td></tr>
+            <tr><td><code>0x0203</code></td><td>命令</td><td>运动触发/停止</td><td>开始运动、停止运动</td></tr>
+            <tr><td><code>0x0301</code></td><td>保持</td><td>目标位置 float</td><td>位置模式目标值</td></tr>
+            <tr><td><code>0x0303</code></td><td>保持</td><td>目标速度 float</td><td>速度模式目标值</td></tr>
+            <tr><td><code>0x0305</code></td><td>保持</td><td>目标电流 float</td><td>电流/转矩模式目标值</td></tr>
+            <tr><td><code>0x0401~0x0425</code></td><td>保持</td><td>电流、速度、位置三环参数</td><td>三环整定面板读取和写入</td></tr>
+            <tr><td><code>0x0111~0x0129</code></td><td>输入</td><td>EtherCAT ready、healthy、recovery、SYNC0 计数</td><td>联调诊断与健康监测</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top: 28px;">4.2 EtherCAT 的工程价值</h3>
+      <p>当前 EtherCAT 代码已经不仅是空壳：它有 LAN9252 初始化、从站栈 bootstrap、CiA402 对象映射、健康检查、失败重试、SYNC0 触发源切换和诊断寄存器。面试时可以把它定位为“在 FOC 控制核心之上接入工业实时总线的移植和验证工作”。</p>
+      <pre><code>comm_ecat_process()
+  如果未 ready 则返回
+  根据 TIM7 / SYNC0 决定是否应用轴命令
+  comm_ecat_update_feedback_to_cia402()
+  MainLoop()
+  comm_ecat_apply_cia402_commands()</code></pre>
+    </section>
+
+    <section id="host">
+      <h2>5. DriverStudio 上位机架构</h2>
+      <p class="section-lead">
+        DriverStudio 的核心价值在于把“现场调试动作”产品化：连接、发命令、读反馈、看波形、记录日志、查原始帧。它不是简单串口助手，而是面向电机驱动器的调试台。
+      </p>
+
+      <div class="diagram">
+        <div class="flow-row">
+          <div class="flow-node"><strong>UI Widgets</strong><span>连接、控制、波形、调试、日志、设置</span></div>
+          <div class="flow-node"><strong>Service</strong><span>SessionService、MotorControlService</span></div>
+          <div class="flow-node"><strong>Protocol Adapter</strong><span>ModbusRtuAdapter、CanopenAdapter、EthercatCoeAdapter</span></div>
+          <div class="flow-node"><strong>Transport</strong><span>SerialRtu、CAN、EtherCAT、Simulated</span></div>
+          <div class="flow-node"><strong>Device</strong><span>STM32H7 FOC 控制器或仿真设备</span></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 18px;">
+        <article class="card">
+          <h3>5.1 会话服务</h3>
+          <p><code>SessionService</code> 持有一个 transport 和一个 protocol adapter，负责 start/stop、sendCommand、超时重试、错误传播、原始帧观察。它让 UI 不需要知道底层是串口、CAN 还是仿真。</p>
+          <pre><code>SessionService::start(config, simulationMode)
+  TransportFactory::create(config.busType, simulationMode)
+  ProtocolAdapterFactory::create(config.busType)
+  transport-&gt;open(config)</code></pre>
+        </article>
+        <article class="card">
+          <h3>5.2 电机控制服务</h3>
+          <p><code>MotorControlService</code> 用 <code>ModbusMotorProtocolProfile</code> 把业务动作翻译成寄存器读写。例如 Start Motion 会依次写控制模式、目标位置、目标速度、目标电流、加减速、运行时间，最后写启动寄存器。</p>
+          <pre><code>startMotion()
+  buildStartMotion()
+  executeBatch()
+  session.sendCommand()
+  更新寄存器缓存</code></pre>
+        </article>
+        <article class="card">
+          <h3>5.3 协议适配</h3>
+          <p><code>ModbusRtuAdapter</code> 负责构帧、CRC、解析响应、异常码映射，还能从噪声 buffer 中提取有效 Modbus 帧。这个处理让现场串口数据不干净时更容易诊断。</p>
+        </article>
+        <article class="card">
+          <h3>5.4 仿真链路</h3>
+          <p><code>SimulatedTransport</code> 内置 Modbus 寄存器和 CANopen 对象字典，支持读写回环、PDO 数据变化和 EMCY 故障。这样上位机 UI、协议和业务服务可以在没有硬件时跑通。</p>
+        </article>
+      </div>
+
+      <h3 style="margin-top: 28px;">5.5 UI 功能模块</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>主要文件</th>
+              <th>能力</th>
+              <th>演示建议</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>连接面板</td>
+              <td><code>src/ui/workbench/connection_panel.*</code></td>
+              <td>选择 RS485、CAN、EtherCAT 配置和仿真模式。</td>
+              <td>先用仿真模式演示，避免现场硬件不稳定。</td>
+            </tr>
+            <tr>
+              <td>电机控制</td>
+              <td><code>src/ui/workbench/motor_control_panel.*</code></td>
+              <td>使能、清故障、设零、位置/速度/电流模式、三环参数。</td>
+              <td>展示一次 Start Motion 命令序列。</td>
+            </tr>
+            <tr>
+              <td>仪表盘</td>
+              <td><code>src/ui/main_window_ctor_begin.inc</code><br><code>src/ui/widgets/gauge_widget.*</code></td>
+              <td>速度、位置、电流、模式、连接状态、运行状态。</td>
+              <td>说明 250 ms 定时刷新遥测。</td>
+            </tr>
+            <tr>
+              <td>波形工作区</td>
+              <td><code>src/ui/waveform_workspace.*</code><br><code>src/ui/waveform_channel_model.*</code></td>
+              <td>多通道趋势、通道显示/名称/来源/缩放/颜色、CSV 导出、JustFloat 解析。</td>
+              <td>展示速度/位置/电流三通道联动。</td>
+            </tr>
+            <tr>
+              <td>诊断面板</td>
+              <td><code>src/ui/workbench/diagnostics_panel.*</code></td>
+              <td>读写寄存器、文本命令、TX/RX 原始帧监视。</td>
+              <td>现场输入 <code>readi 0x0101 2</code>。</td>
+            </tr>
+            <tr>
+              <td>主题与工作区</td>
+              <td><code>src/ui/theme_manager.*</code><br><code>src/ui/workspace_state.*</code></td>
+              <td>工程主题、强调色、布局保存/加载。</td>
+              <td>作为工程完整性补充展示。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <p><strong>现场演示建议：</strong>如果硬件链路不稳定，先用 DriverStudio 的仿真模式完成 UI 和协议闭环，再切到真实串口演示一两个关键寄存器读取。这样演示风险最低。</p>
+      </div>
+    </section>
+
+    <section id="interview">
+      <h2>6. 面试讲法：三分钟版本</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="time">第 0-30 秒</div>
+          <div>
+            <h3>项目定位</h3>
+            <p>“我做的是一套 STM32H7 FOC 电机控制器和 Qt 上位机调试平台。下位机负责实时控制和工业通信，上位机负责连接、参数整定、波形监控和故障诊断。目标是把电机控制算法落到真实硬件，并做成可调试、可验证的工程系统。”</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="time">第 30-90 秒</div>
+          <div>
+            <h3>下位机架构</h3>
+            <p>“固件分成 Core、BSP、算法库、axis 控制对象、app 装配和 comm 协议层。电流环走 ADC 注入转换回调，约 20 kHz；速度/位置外环走 TIM7 1 ms；FOC 内部完成 Clarke/Park、d/q PID、反 Park、SVPWM 和 PWM 更新。”</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="time">第 90-150 秒</div>
+          <div>
+            <h3>通信与上位机</h3>
+            <p>“通信层用对象字典把寄存器地址映射到控制对象。DriverStudio 上位机也按 Transport、Protocol Adapter、Service、UI 分层，所以 RS485、CAN 和后续 EtherCAT 可以复用统一会话模型。上位机还有仿真链路，可以没有硬件也跑通协议和 UI。”</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="time">第 150-180 秒</div>
+          <div>
+            <h3>工程亮点收尾</h3>
+            <p>“我在项目里处理过 H7 FPU、DMA 可访问内存、Cache、UART ReceiveToIdle DMA、Modbus 一致性、EtherCAT SYNC0 触发等问题。这个项目对我最大的提升是：不仅会写控制算法，还能把控制、通信、调试和测试连成一个可演示的工程闭环。”</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo-script">
+      <h2>7. 明天演示流程建议</h2>
+      <p class="section-lead">按这个顺序演示，逻辑会比较稳：先讲架构，再看代码，再跑上位机，最后讲问题复盘和改进计划。</p>
+
+      <div class="grid-2">
+        <article class="card">
+          <h3>7.1 代码演示路径</h3>
+          <ol>
+            <li>打开 <code>Core/Src/main.c</code>，展示 FPU、外设初始化、<code>App_AxisInit</code>、<code>App_CommInit</code>、<code>TIM7</code> 启动。</li>
+            <li>打开 <code>app/app_axis.c</code>，展示轴对象如何绑定 Tamagawa 编码器、ADC2、TIM1 PWM、RAM_D2 电流采样对象。</li>
+            <li>打开 <code>MC/axis.c</code>，展示 <code>axis_current_loop_irq_handler</code> 和 <code>axis_outer_loop_handler</code>。</li>
+            <li>打开 <code>MC/mc_foc.c</code>，展示 FOC 算法链路和 PID 参数。</li>
+            <li>打开 <code>comm/protocol/comm_od.c</code>，展示寄存器如何映射到控制变量。</li>
+            <li>切到 <code>F:/DriverStudio</code>，展示 <code>SessionService</code>、<code>ModbusMotorProtocolProfile</code> 和 UI 面板。</li>
+          </ol>
+        </article>
+
+        <article class="card">
+          <h3>7.2 上位机演示路径</h3>
+          <ol>
+            <li>启动 DriverStudio，先选择仿真模式，连接 RS485。</li>
+            <li>进入仪表盘，说明 250 ms 刷新遥测。</li>
+            <li>进入电机控制面板，执行使能、写目标、启动运动。</li>
+            <li>进入诊断面板，输入 <code>readi 0x0101 2</code> 查看位置反馈原始帧。</li>
+            <li>进入波形页面，展示速度、位置、电流通道。</li>
+            <li>如果硬件在线，再切真实串口，读取一个反馈寄存器即可。</li>
+          </ol>
+        </article>
+      </div>
+
+      <h3 style="margin-top: 28px;">7.3 可以直接背的开场</h3>
+      <div class="quote">
+        我的项目是一套 STM32H7 FOC 电机控制器和 Qt 上位机调试平台。固件侧我重点做了三环控制、实时采样、PWM 输出、编码器反馈和 Modbus/EtherCAT 通信映射；上位机侧我做了多总线会话抽象、协议适配、运动控制面板、仪表盘、波形和诊断工具。这个项目的特点是端到端：既能讲控制算法，也能讲嵌入式实时问题和上位机工程化。
+      </div>
+
+      <h3 style="margin-top: 28px;">7.4 推荐现场命令</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>动作</th>
+              <th>DriverStudio 文本命令</th>
+              <th>Modbus 含义</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>读位置反馈</td><td><code>readi 0x0101 2</code></td><td>读输入寄存器，解析 32-bit float</td></tr>
+            <tr><td>读速度反馈</td><td><code>readi 0x0103 2</code></td><td>读输入寄存器，解析 32-bit float</td></tr>
+            <tr><td>使能电机</td><td><code>write 0x0202 1</code></td><td>写单寄存器，使能轴</td></tr>
+            <tr><td>触发运动</td><td><code>write 0x0203 1</code></td><td>写单寄存器，置位 move_flag</td></tr>
+            <tr><td>写目标位置</td><td><code>setposf 1.57</code></td><td>写两个保持寄存器，float 高字在前</td></tr>
+            <tr><td>写目标速度</td><td><code>setvelof 10.0</code></td><td>写两个保持寄存器，float 高字在前</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="risks">
+      <h2>8. 当前可诚实说明的改进点</h2>
+      <p class="section-lead">
+        面试不是只讲“完美”，也要能讲你如何发现问题、收敛问题、规划下一步。下面这些点建议放在最后，作为工程意识的体现。
+      </p>
+
+      <div class="grid-2">
+        <article class="card">
+          <h3>协议枚举需要最终统一</h3>
+          <p>固件 <code>axis_mode_t</code> 当前是 <code>DISABLED=0, CURRENT=1, VELOCITY=2, POSITION=3</code>；DriverStudio 的业务模式映射是 <code>Position=0, Speed=1, Current=2</code>。这属于联调阶段必须收敛的寄存器协议问题。</p>
+          <div class="callout risk">
+            <p>面试回答：我会把“线上的寄存器枚举”和“固件内部 enum”分开，新增显式转换函数，避免直接 cast，保证协议向后兼容。</p>
+          </div>
+        </article>
+        <article class="card">
+          <h3>EtherCAT 还需要硬件级验收</h3>
+          <p>当前代码已经包含 LAN9252、CiA402、SYNC0 和诊断框架，但 EtherCAT 真正稳定还需要主站联调、PDO 周期一致性、状态机切换和长时间运行验证。</p>
+          <div class="callout warn">
+            <p>面试回答：我会优先做 ESI/对象字典核对、SYNC0 周期测量、PDO 映射验收和掉线恢复测试。</p>
+          </div>
+        </article>
+        <article class="card">
+          <h3>上位机主窗口仍偏大</h3>
+          <p>DriverStudio 已经拆出多个 workbench 面板，但 <code>MainWindow</code> 仍承担较多编排职责。后续可以把命令解析、遥测刷新、导航状态继续下沉到独立 Controller 或 ViewModel。</p>
+        </article>
+        <article class="card">
+          <h3>控制参数需要实机整定数据沉淀</h3>
+          <p>目前 PID 参数已经可通过寄存器写入，上位机也有三环整定面板。下一步可以保存参数组、记录阶跃响应、生成调参报告，形成更完整的工程证据。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="source-map">
+      <h2>9. 代码地图</h2>
+      <div class="grid-2">
+        <article class="card">
+          <h3>h7FOC 固件侧</h3>
+          <ul class="source-list">
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/Core/Src/main.c</code> - 启动入口、外设初始化、业务层装配。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/Core/Src/stm32h7xx_it.c</code> - ADC、TIM、UART、EXTI 中断转发。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/app/app_axis.c</code> - axis0 资源绑定与初始化。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/app/app_comm.c</code> - Modbus、EtherCAT、VOFA 调度。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/MC/axis.c</code> - 状态机、三环调度、PWM 输出。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/MC/mc_foc.c</code> - FOC 算法核心。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/BSP/bsp_current_sense.c</code> - 电流采样、校准、滤波。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/BSP/bsp_tamagawa_uart.c</code> - 多摩川编码器 UART DMA 通信。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/comm/protocol/comm_modbus.c</code> - Modbus RTU 从站。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/comm/protocol/comm_od.c</code> - 寄存器对象字典。</li>
+            <li><code>C:/Users/ASUS/Desktop/STM32demo/h7FOC/comm/protocol/comm_ecat_if.c</code> - EtherCAT/CiA402 适配和诊断。</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>DriverStudio 上位机侧</h3>
+          <ul class="source-list">
+            <li><code>F:/DriverStudio/src/service/session_service.cpp</code> - 会话生命周期、发送、接收、重试。</li>
+            <li><code>F:/DriverStudio/src/service/motor_control_service.cpp</code> - 电机业务动作和寄存器缓存。</li>
+            <li><code>F:/DriverStudio/src/protocol/modbus_rtu_adapter.cpp</code> - Modbus 构帧、解析、CRC 和错误映射。</li>
+            <li><code>F:/DriverStudio/src/transport/simulated_transport.cpp</code> - 仿真链路和寄存器回环。</li>
+            <li><code>F:/DriverStudio/src/motor/modbus_motor_protocol_profile.cpp</code> - 运动命令和三环参数命令生成。</li>
+            <li><code>F:/DriverStudio/src/motor/modbus_motor_register_map.h</code> - 上位机寄存器地址表。</li>
+            <li><code>F:/DriverStudio/src/ui/main_window_methods.inc</code> - 遥测刷新、仪表盘更新、信号绑定。</li>
+            <li><code>F:/DriverStudio/src/ui/workbench/motor_control_panel.*</code> - 电机控制 UI。</li>
+            <li><code>F:/DriverStudio/src/ui/workbench/diagnostics_panel.*</code> - 诊断命令和串口帧监视。</li>
+            <li><code>F:/DriverStudio/src/ui/waveform_workspace.*</code> - 多通道波形工作区。</li>
+            <li><code>F:/DriverStudio/tests/test_main.cpp</code> - QtTest 回归测试集合。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="qa">
+      <h2>10. 常见追问回答</h2>
+      <div class="grid-2">
+        <article class="card">
+          <h3>Q：为什么电流环要放在 ADC 注入转换完成回调里？</h3>
+          <p>A：因为电流采样必须和 PWM 周期对齐，ADC 注入转换由 TIM1 CH4 触发，采样完成后立即计算 FOC，可以减少采样到输出更新之间的抖动。速度和位置环频率低，所以放到 1 ms 定时器节拍里。</p>
+        </article>
+        <article class="card">
+          <h3>Q：H7 上 DMA 和 Cache 遇到过什么坑？</h3>
+          <p>A：STM32H7 有 DTCM、D2 SRAM、AXI SRAM 等区域，DMA 并不能访问所有内存；同时 DCache 会导致 CPU 看到旧数据。因此我把关键 DMA 对象放在可访问 SRAM，并在 UART DMA 等路径上关注 cache clean/invalidate。</p>
+        </article>
+        <article class="card">
+          <h3>Q：上位机为什么不直接写串口？</h3>
+          <p>A：直接写串口会把 UI、协议和链路耦合死。现在用 Transport + Protocol Adapter + Service 分层，后续切 CAN、EtherCAT 或仿真链路时，UI 和业务服务基本不用改。</p>
+        </article>
+        <article class="card">
+          <h3>Q：这个项目最能体现你的工程能力在哪里？</h3>
+          <p>A：我认为是闭环能力：能从控制算法写到中断和外设，从协议映射写到上位机工具，还能通过仿真和测试保障功能。它覆盖了嵌入式实时性、硬件联调、通信协议和桌面软件工程。</p>
+        </article>
+        <article class="card">
+          <h3>Q：如果让你继续完善，你会先做什么？</h3>
+          <p>A：我会先统一协议枚举和单位，补充端到端联调测试；然后做 EtherCAT 主站验收和 SYNC0 周期测量；最后把 DriverStudio 的参数组、阶跃响应和调参记录沉淀成可导出的报告。</p>
+        </article>
+        <article class="card">
+          <h3>Q：为什么要做仿真链路？</h3>
+          <p>A：上位机开发不能每次都依赖真实硬件。仿真链路可以验证 UI、协议、命令批处理和回归测试，还能让演示更稳定。真实硬件接入时，只需要切换 Transport。</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="page">
+      <p>文档生成依据：当前本地代码库 <code>C:/Users/ASUS/Desktop/STM32demo/h7FOC</code> 与 <code>F:/DriverStudio</code>。建议演示前用浏览器打开本文件，并同时准备 IDE 中的关键源码标签页。</p>
+      <p><a href="#top">回到顶部</a></p>
+    </div>
+  </footer>
+</body>
+</html>

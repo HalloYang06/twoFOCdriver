@@ -145,7 +145,7 @@ STM32H7 DMA cannot access DTCM RAM (0x20000000). CurrentSense_TypeDef buffers ar
 - Limits: FOC.h defines FOC_VOLTAGE_LIMIT, FOC_CURRENT_LIMIT, FOC_VELOCITY_LIMIT
 
 ### Debugging Motor Issues
-See DEBUG_INSTRUCTIONS.md for systematic troubleshooting steps. Key checks:
+See `docs/DEBUG_INSTRUCTIONS.md` for systematic troubleshooting steps. Key checks:
 1. Verify ADC interrupt entry (LED toggle test)
 2. Verify FOC enabled flag
 3. Check PWM duty cycles are non-zero
@@ -191,9 +191,9 @@ Ensure no resource conflicts.
 
 ## Documentation References
 
-- **FOC_Usage.md**: Complete FOC initialization, control modes, PID tuning
-- **Motor_Encapsulation.md**: Motor object architecture, dual-motor examples
-- **DEBUG_INSTRUCTIONS.md**: Systematic debugging for motor control issues
+- **docs/FOC_Usage.md**: Complete FOC initialization, control modes, PID tuning
+- **docs/Motor_Encapsulation.md**: Motor object architecture, dual-motor examples
+- **docs/DEBUG_INSTRUCTIONS.md**: Systematic debugging for motor control issues
 
 ## Recent Development Focus
 
