@@ -133,7 +133,7 @@ cmake --build build
 
 ## 文档入口
 
-所有面试展示、调试记录和联调手册都集中在 [docs/](docs/)：
+所有调试记录和联调手册都集中在 [docs/](docs/)：
 
 - [docs/README.md](docs/README.md)：文档总目录和推荐阅读顺序
 - [docs/FOC_Usage.md](docs/FOC_Usage.md)：FOC 使用说明
