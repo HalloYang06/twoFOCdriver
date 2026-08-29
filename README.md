@@ -4,7 +4,7 @@ h7FOC 是一个基于 STM32H750 的电机控制工程，目标是把 PMSM/BLDC �
 
 当前工程重点围绕单轴 `axis0` 打通：TIM1 三相互补 PWM 输出，ADC2 注入采样进入 20 kHz 电流环，多摩川绝对值编码器提供电角度/机械位置反馈，TIM7 或 EtherCAT SYNC0 驱动 1 kHz 慢环，通信侧同时保留 VOFA+、Modbus RTU、CAN 和 LAN9252 EtherCAT/CiA402 接入。
 
-## 面试官快速跳转
+## 项目文档导航
 
 | 想看什么 | 入口 | 说明 |
 | --- | --- | --- |
@@ -16,7 +16,6 @@ h7FOC 是一个基于 STM32H750 的电机控制工程，目标是把 PMSM/BLDC �
 | HardFault 复盘 | [docs/HardFault_问题复盘.md](docs/HardFault_问题复盘.md) | Cortex-M7、UART DMA、Cache、栈/堆/全局区的故障分析 |
 | Modbus 联调 | [docs/Modbus_TEST1一致性核对与联调手册.md](docs/Modbus_TEST1一致性核对与联调手册.md) | TEST1/DriverStudio 兼容性、寄存器和联调验收 |
 | EtherCAT 移植 | [docs/EtherCAT_开发移植学习手册.md](docs/EtherCAT_开发移植学习手册.md) | LAN9252、EtherCAT 从站和 CiA402 移植路线 |
-| 面试展示页 | [docs/interview_project_showcase.html](docs/interview_project_showcase.html) | 面向展示的 HTML 项目说明页 |
 
 ## 项目亮点
 
@@ -68,7 +67,7 @@ flowchart TD
 | `comm/` | 通信层，包含 VOFA 调试、Modbus 对象字典、CAN 控制、EtherCAT/CiA402 协议栈 |
 | `Middlewares/` | FreeRTOS/CMSIS-RTOS2 |
 | `Drivers/` | STM32 HAL、CMSIS、CMSIS-DSP |
-| `docs/` | 调试指南、故障复盘、协议联调和面试展示资料 |
+| `docs/` | 调试指南、故障复盘和协议联调资料 |
 
 ## 实时控制流程
 
